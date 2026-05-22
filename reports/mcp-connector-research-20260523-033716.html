@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MCP コネクタ実装ガイド — 自社サービスを Claude / ChatGPT / Grok の Web UI に繋ぐ</title>
+<meta name="description" content="MCP (Model Context Protocol) を使って自社サービスを Claude.ai / ChatGPT / Grok / Copilot の Web UI に繋ぐためのプロトコル仕様・認証方式・各 UI の対応状況・実装手順を網羅した調査レポート (2026-05-23 時点)。" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: dark light;
+  --primary: #a78bfa;
+  --primary-2: #c084fc;
+  --accent: #ec4899;
+  --accent-2: #f472b6;
+  --cyan: #22d3ee;
+  --success: #4ade80;
+  --warn: #fbbf24;
+  --danger: #f43f5e;
+  --bg-0: #0a0612;
+  --bg-1: #15101f;
+  --bg-2: #1f1832;
+  --bg-3: #2a2143;
+  --line: #332858;
+  --line-soft: #261d40;
+  --text-0: #f3eaff;
+  --text-1: #c4b5e8;
+  --text-2: #8b7eb0;
+  --code-bg: #0d0818;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-0: #faf7ff;
+    --bg-1: #f2ecff;
+    --bg-2: #e8defc;
+    --bg-3: #ddd0f7;
+    --line: #c9b8eb;
+    --line-soft: #d9cdf0;
+    --text-0: #1a0d35;
+    --text-1: #4a3370;
+    --text-2: #6b5a8c;
+    --code-bg: #f4eeff;
+    --primary: #7c3aed;
+    --primary-2: #6d28d9;
+    --accent: #db2777;
+  }
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg-0);
+  background-image: radial-gradient(ellipse at top left, rgba(167, 139, 250, 0.12) 0%, transparent 50%),
+                    radial-gradient(ellipse at bottom right, rgba(236, 72, 153, 0.08) 0%, transparent 50%);
+  color: var(--text-0);
+  font-family: 'Inter', 'Noto Sans JP', sans-serif;
+  line-height: 1.75;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "palt" 1;
+}
+.container { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+/* ===== Hero ===== */
+.hero {
+  position: relative;
+  padding: 96px 24px 72px;
+  overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(135deg, rgba(167, 139, 250, 0.15) 0%, transparent 40%),
+    linear-gradient(225deg, rgba(236, 72, 153, 0.12) 0%, transparent 50%);
+}
+.hero-inner { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; }
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 6px 16px; border-radius: 999px;
+  background: rgba(167, 139, 250, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.4);
+  color: var(--primary-2);
+  font-size: 13px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
+  margin-bottom: 28px;
+}
+.hero-eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 16px var(--accent); }
+.hero h1 {
+  font-size: clamp(40px, 6vw, 68px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  margin: 0 0 24px;
+  background: linear-gradient(135deg, var(--text-0) 0%, var(--primary-2) 55%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero-sub {
+  font-size: clamp(17px, 2vw, 21px);
+  color: var(--text-1);
+  max-width: 880px;
+  line-height: 1.7;
+  margin: 0 0 36px;
+}
+.hero-meta {
+  display: flex; flex-wrap: wrap; gap: 28px;
+  padding: 20px 28px;
+  background: rgba(21, 16, 31, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  font-size: 14px;
+  color: var(--text-1);
+}
+.hero-meta .item { display: flex; align-items: center; gap: 8px; }
+.hero-meta .label { color: var(--text-2); font-weight: 500; }
+.hero-meta .val { color: var(--text-0); font-weight: 600; }
+
+/* ===== Big numbers ===== */
+.bignum-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  margin: 48px 0;
+}
+.bignum {
+  padding: 28px 24px;
+  background: linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.bignum::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+}
+.bignum .num {
+  font-family: 'Inter', sans-serif;
+  font-size: 44px; font-weight: 800; line-height: 1;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, var(--primary-2), var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 8px;
+}
+.bignum .label { font-size: 14px; color: var(--text-1); line-height: 1.5; font-weight: 500; }
+
+/* ===== TL;DR ===== */
+.tldr {
+  margin: 56px 0;
+  padding: 32px 36px;
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.08), rgba(236, 72, 153, 0.05));
+  border: 1px solid var(--primary);
+  border-radius: 18px;
+  position: relative;
+}
+.tldr-tag {
+  position: absolute; top: -12px; left: 28px;
+  padding: 4px 14px;
+  background: var(--bg-0);
+  border: 1px solid var(--primary);
+  border-radius: 999px;
+  font-size: 12px; font-weight: 700; color: var(--primary-2);
+  letter-spacing: 0.12em;
+}
+.tldr ul { margin: 0; padding-left: 0; list-style: none; }
+.tldr li {
+  font-size: 17px;
+  line-height: 1.7;
+  margin-bottom: 14px;
+  padding-left: 32px;
+  position: relative;
+  color: var(--text-0);
+}
+.tldr li:last-child { margin-bottom: 0; }
+.tldr li::before {
+  content: '→'; position: absolute; left: 0; top: 0;
+  font-weight: 700; color: var(--accent);
+}
+
+/* ===== Sections ===== */
+section { padding: 32px 0 56px; }
+h2 {
+  font-size: clamp(26px, 3.2vw, 36px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 56px 0 8px;
+  display: flex; align-items: center; gap: 16px;
+  scroll-margin-top: 24px;
+}
+h2 .num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white;
+  border-radius: 12px;
+  font-size: 18px; font-weight: 800;
+  flex-shrink: 0;
+}
+h2 + .lead {
+  color: var(--text-1);
+  font-size: 16px;
+  margin: 0 0 28px;
+  padding-left: 60px;
+}
+h3 {
+  font-size: clamp(19px, 2vw, 23px);
+  font-weight: 700;
+  margin: 36px 0 14px;
+  color: var(--text-0);
+  letter-spacing: -0.01em;
+}
+h4 {
+  font-size: 17px; font-weight: 700;
+  margin: 24px 0 10px;
+  color: var(--primary-2);
+}
+p { margin: 0 0 16px; color: var(--text-0); }
+p, li { font-size: 16px; }
+ul, ol { padding-left: 22px; color: var(--text-0); }
+li { margin-bottom: 8px; line-height: 1.7; }
+a { color: var(--cyan); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s; }
+a:hover { border-bottom-color: var(--cyan); }
+strong { color: var(--text-0); font-weight: 700; }
+em { color: var(--primary-2); font-style: normal; font-weight: 600; }
+
+/* ===== TOC ===== */
+.toc {
+  margin: 48px 0;
+  padding: 28px 32px;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.toc-title {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--text-2);
+  margin-bottom: 18px;
+}
+.toc-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px 32px;
+  list-style: none;
+  padding: 0; margin: 0;
+}
+.toc-list li {
+  display: flex; align-items: baseline; gap: 12px;
+  margin: 0; padding: 4px 0;
+  border-bottom: 1px dashed var(--line-soft);
+}
+.toc-list .num {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent);
+  font-size: 13px; font-weight: 600;
+  min-width: 22px;
+}
+.toc-list a { color: var(--text-0); border: none; font-size: 15px; }
+.toc-list a:hover { color: var(--primary-2); }
+
+/* ===== Tables ===== */
+.table-wrap { overflow-x: auto; margin: 20px 0 28px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg-1); }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+}
+th {
+  background: var(--bg-2);
+  color: var(--primary-2);
+  font-weight: 700;
+  text-align: left;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+td {
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--text-0);
+  vertical-align: top;
+  line-height: 1.55;
+}
+tr:nth-child(even) td { background: rgba(167, 139, 250, 0.025); }
+tr:last-child td { border-bottom: none; }
+td code, th code { font-size: 13px; }
+
+/* ===== Callouts ===== */
+.callout {
+  margin: 20px 0;
+  padding: 20px 24px;
+  border-radius: 12px;
+  border-left: 4px solid;
+  background: var(--bg-1);
+  display: flex; gap: 16px; align-items: flex-start;
+}
+.callout .icon { font-size: 22px; line-height: 1; flex-shrink: 0; margin-top: 1px; }
+.callout .body { flex: 1; }
+.callout .body p:last-child { margin-bottom: 0; }
+.callout.ok { border-color: var(--success); background: rgba(74, 222, 128, 0.06); }
+.callout.warn { border-color: var(--warn); background: rgba(251, 191, 36, 0.06); }
+.callout.danger { border-color: var(--danger); background: rgba(244, 63, 94, 0.07); }
+.callout.info { border-color: var(--primary); background: rgba(167, 139, 250, 0.07); }
+.callout.tip { border-color: var(--cyan); background: rgba(34, 211, 238, 0.06); }
+.callout strong { color: var(--text-0); }
+
+/* ===== Code ===== */
+pre, code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13.5px;
+}
+code {
+  padding: 2px 7px;
+  background: var(--code-bg);
+  border: 1px solid var(--line-soft);
+  border-radius: 5px;
+  color: var(--primary-2);
+}
+pre {
+  padding: 20px 22px;
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow-x: auto;
+  line-height: 1.6;
+  margin: 16px 0;
+}
+pre code { padding: 0; background: none; border: none; color: var(--text-0); font-size: 13.5px; }
+.code-block-header {
+  padding: 10px 18px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: 10px;
+}
+.code-block-header + pre { border-radius: 0 0 12px 12px; margin-top: 0; }
+
+/* ===== Cards ===== */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+.card {
+  padding: 22px 24px;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.card:hover { border-color: var(--primary); transform: translateY(-2px); }
+.card-title {
+  font-size: 16px; font-weight: 700;
+  color: var(--primary-2);
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 10px;
+}
+.card-body { font-size: 14px; color: var(--text-1); line-height: 1.65; }
+
+/* ===== Badges ===== */
+.badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 0 2px;
+}
+.badge.primary { background: rgba(167, 139, 250, 0.18); color: var(--primary-2); border: 1px solid rgba(167, 139, 250, 0.35); }
+.badge.accent { background: rgba(236, 72, 153, 0.15); color: var(--accent-2); border: 1px solid rgba(236, 72, 153, 0.35); }
+.badge.cyan { background: rgba(34, 211, 238, 0.15); color: var(--cyan); border: 1px solid rgba(34, 211, 238, 0.35); }
+.badge.success { background: rgba(74, 222, 128, 0.15); color: var(--success); border: 1px solid rgba(74, 222, 128, 0.35); }
+.badge.warn { background: rgba(251, 191, 36, 0.15); color: var(--warn); border: 1px solid rgba(251, 191, 36, 0.35); }
+
+/* ===== Flow diagram ===== */
+.flow {
+  margin: 24px 0;
+  padding: 28px;
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-0);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* ===== Comparison check marks ===== */
+.check-yes { color: var(--success); font-weight: 700; }
+.check-no { color: var(--danger); font-weight: 700; }
+.check-partial { color: var(--warn); font-weight: 700; }
+
+/* ===== Steps ===== */
+.steps { counter-reset: step; padding: 0; list-style: none; margin: 24px 0; }
+.steps > li {
+  counter-increment: step;
+  padding: 22px 24px 22px 80px;
+  margin-bottom: 14px;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  position: relative;
+}
+.steps > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 22px; top: 22px;
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800; font-size: 17px;
+}
+.steps .step-title {
+  font-size: 17px; font-weight: 700;
+  color: var(--text-0);
+  margin-bottom: 6px;
+}
+.steps .step-body { font-size: 14.5px; color: var(--text-1); line-height: 1.65; }
+
+/* ===== Decision matrix ===== */
+.decision {
+  margin: 28px 0;
+  padding: 28px;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.06), rgba(167, 139, 250, 0.06));
+  border: 1px solid var(--cyan);
+  border-radius: 16px;
+}
+.decision-title {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--cyan);
+  margin-bottom: 18px;
+  display: flex; align-items: center; gap: 10px;
+}
+
+/* ===== Footer ===== */
+footer {
+  margin-top: 96px;
+  padding: 56px 24px 36px;
+  background: var(--bg-1);
+  border-top: 1px solid var(--line);
+}
+.footer-inner { max-width: 1180px; margin: 0 auto; }
+.sources { columns: 2; column-gap: 36px; margin: 24px 0; }
+.sources li { break-inside: avoid; font-size: 13px; margin-bottom: 7px; }
+.footer-meta {
+  padding-top: 28px; margin-top: 36px;
+  border-top: 1px solid var(--line);
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+  font-size: 12.5px; color: var(--text-2);
+}
+.footer-meta a { color: var(--text-1); }
+
+@media (max-width: 720px) {
+  .hero { padding: 56px 18px 40px; }
+  h2 { margin-top: 36px; }
+  h2 + .lead { padding-left: 0; }
+  .sources { columns: 1; }
+  .steps > li { padding-left: 70px; }
+  .hero-meta { gap: 14px; padding: 16px; }
+  pre { font-size: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+  html { scroll-behavior: auto; }
+}
+@media print {
+  body { background: white; color: black; }
+  .hero::before, body { background: white; }
+  h1, h2, h3 { color: black !important; -webkit-text-fill-color: black; }
+  .card, .callout, .tldr, .toc, .bignum, table, pre { break-inside: avoid; }
+}
+
+/* details */
+details {
+  margin: 16px 0;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 22px;
+}
+details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--primary-2);
+  list-style: none;
+  display: flex; align-items: center; gap: 10px;
+}
+details summary::-webkit-details-marker { display: none; }
+details summary::before {
+  content: '▸';
+  transition: transform 0.2s;
+  color: var(--accent);
+  font-size: 14px;
+}
+details[open] summary::before { transform: rotate(90deg); }
+details[open] summary { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line-soft); }
+</style>
+
+  
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="zen-ai-skills / Research">
+  <meta property="og:title" content="自社サービスを LLM の Web UI に繋ぐ全手順 — MCP コネクタ実装ガイド">
+  <meta property="og:description" content="Claude.ai / ChatGPT / Grok / Microsoft Copilot — 4 UI 共通プロトコル MCP の仕様・認証・各 UI 対応状況・実装手順を網羅した調査レポート (2026-05-23)">
+  <meta property="og:url" content="https://zen-jp.github.io/web-publish-cdn/reports/mcp-connector-research-20260523-033707.html">
+  <meta property="og:image" content="https://raw.githubusercontent.com/zen-jp/web-publish-cdn/master/og/mcp-connector-research-20260523-033657.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="自社サービスを LLM の Web UI に繋ぐ全手順 — MCP コネクタ実装ガイド">
+  <meta name="twitter:description" content="Claude.ai / ChatGPT / Grok / Microsoft Copilot — 4 UI 共通プロトコル MCP の仕様・認証・各 UI 対応状況・実装手順を網羅した調査レポート (2026-05-23)">
+  <meta name="twitter:image" content="https://raw.githubusercontent.com/zen-jp/web-publish-cdn/master/og/mcp-connector-research-20260523-033657.png">
+</head>
+<body>
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+<div class="hero-inner">
+<div class="hero-eyebrow"><span class="dot"></span>Research Report · 2026-05-23</div>
+<h1>自社サービスを<br>LLM の Web UI に繋ぐ全手順</h1>
+<p class="hero-sub">Claude.ai / ChatGPT / Grok / Microsoft Copilot — 4 つの主要 LLM Web UI が <strong>MCP (Model Context Protocol)</strong> を共通インターフェースとして採用しつつある。本レポートは、自社サービスを「カスタムコネクタ」として接続するために必要な、プロトコル仕様・認証アーキテクチャ・各 UI の対応状況・実装手順を網羅した一次調査の集約版。</p>
+<div class="hero-meta">
+  <div class="item"><span class="label">対象</span> <span class="val">情シス・開発・PdM</span></div>
+  <div class="item"><span class="label">調査日</span> <span class="val">2026-05-23</span></div>
+  <div class="item"><span class="label">プロトコル</span> <span class="val">MCP 2025-06-18 / 2025-11-25</span></div>
+  <div class="item"><span class="label">出典</span> <span class="val">一次資料 30+ 件</span></div>
+</div>
+</div>
+</header>
+
+<div class="container">
+
+<!-- ===== Big numbers ===== -->
+<section>
+<div class="bignum-grid">
+  <div class="bignum">
+    <div class="num">4</div>
+    <div class="label">MCP 対応の主要 Web UI<br>(Claude / ChatGPT / Grok / Copilot)</div>
+  </div>
+  <div class="bignum">
+    <div class="num">2025-06-18</div>
+    <div class="label">現行プロトコルバージョン<br>(OAuth Resource Server 化)</div>
+  </div>
+  <div class="bignum">
+    <div class="num">OAuth 2.1</div>
+    <div class="label">標準認証方式<br>+ PKCE / DCR / Resource Indicators</div>
+  </div>
+  <div class="bignum">
+    <div class="num">3〜5日</div>
+    <div class="label">OAuth 込み MVP 工数<br>(1 人換算、Cloudflare/Vercel ベース)</div>
+  </div>
+</div>
+</section>
+
+<!-- ===== TL;DR ===== -->
+<div class="tldr">
+<span class="tldr-tag">TL;DR · 5秒で要旨</span>
+<ul>
+  <li><strong>MCP は Anthropic 発の業界標準</strong>。Claude.ai が 2025/5 にコネクタ対応、ChatGPT・Grok・M365 Copilot も 2026 年までに追従。仕様は OSS・透明・各社互換。</li>
+  <li><strong>自社サービス接続には「Remote MCP Server + OAuth 2.1」が事実上必須</strong>。Streamable HTTP transport + DCR 対応の認可サーバーが揃えば、4 UI すべてに繋がる。</li>
+  <li><strong>最短経路は Cloudflare Workers または Vercel</strong>。OAuth 込みの MVP を <em>1 週間以内</em> に立ち上げ可能。本番品質まで含めても 3〜6 週間が現実的なレンジ。</li>
+</ul>
+</div>
+
+<!-- ===== TOC ===== -->
+<div class="toc">
+<div class="toc-title">目次 · Table of Contents</div>
+<ul class="toc-list">
+  <li><span class="num">01</span><a href="#ch-mcp">MCP とは何か (3 分で要点)</a></li>
+  <li><span class="num">02</span><a href="#ch-uis">各 Web UI の対応状況と比較表</a></li>
+  <li><span class="num">03</span><a href="#ch-auth">認証アーキテクチャ (OAuth 2.1 詳細)</a></li>
+  <li><span class="num">04</span><a href="#ch-impl">実装手順とホスティング選択肢</a></li>
+  <li><span class="num">05</span><a href="#ch-sec">セキュリティと運用考慮事項</a></li>
+  <li><span class="num">06</span><a href="#ch-plan">工数感と段階的アプローチ</a></li>
+  <li><span class="num">07</span><a href="#ch-zen">当社 (zenplace) への推奨</a></li>
+  <li><span class="num">08</span><a href="#ch-refs">出典・参考リンク</a></li>
+</ul>
+</div>
+
+<!-- ===== Chapter 1: MCP ===== -->
+<section id="ch-mcp">
+<h2><span class="num">1</span>MCP とは何か</h2>
+<p class="lead">Model Context Protocol は、LLM (Host) ↔ ツール/データ提供者 (Server) を繋ぐオープンプロトコル。「LLM 業界の USB-C」と呼ばれる。</p>
+
+<h3>1.1 3層アーキテクチャ</h3>
+<p>MCP は <strong>Host / Client / Server</strong> の 3 者で構成される。Host が AI アプリ本体 (Claude Desktop, ChatGPT, IDE 等)、Client は Host 内で各サーバーへの接続を担う薄い層、Server がツール・データ・プロンプトを公開する独立プロセス。</p>
+
+<div class="flow">[Host: Claude.ai / ChatGPT / Grok / Copilot]
+  ├─ MCP Client 1 ─── HTTPS ──── Server A (社内 CRM API)
+  ├─ MCP Client 2 ─── HTTPS ──── Server B (社内ナレッジ DB)
+  └─ MCP Client 3 ─── HTTPS ──── Server C (Salesforce / Notion / GitHub 等)</div>
+
+<h3>1.2 Primitives (サーバーが提供できる 3 種類)</h3>
+<div class="card-grid">
+  <div class="card">
+    <div class="card-title">🔧 Tools</div>
+    <div class="card-body">AI が <strong>実行</strong>できる関数。API 呼び出し・DB クエリ・ファイル操作など。<code>tools/list</code> / <code>tools/call</code>。入力は JSON Schema で型定義。書き込み系は <code>destructiveHint: true</code> 必須。</div>
+  </div>
+  <div class="card">
+    <div class="card-title">📚 Resources</div>
+    <div class="card-body">AI が <strong>読み込む</strong>データ。ファイル内容・DB レコード・API レスポンスなど。<code>resources/list</code> / <code>resources/read</code>。URI でアドレッシング。</div>
+  </div>
+  <div class="card">
+    <div class="card-title">💬 Prompts</div>
+    <div class="card-body">ユーザーが呼び出せる <strong>再利用可能テンプレート</strong>。スラッシュコマンド等で展開。「議事録を要約して」「インシデント報告書を作って」のような業務テンプレ向き。</div>
+  </div>
+</div>
+
+<h3>1.3 プロトコルバージョンと Transport</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>バージョン</th><th>状態</th><th>主な変更</th></tr></thead>
+<tbody>
+<tr><td><strong>2025-11-25</strong></td><td><span class="badge primary">Current</span></td><td>OIDC Discovery 1.0、Tools/Resources のアイコン、増分スコープ同意、Tasks 実験的サポート</td></tr>
+<tr><td>2025-06-18</td><td><span class="badge cyan">Stable</span></td><td>MCP サーバーを OAuth Resource Server として正式定義、RFC 8707 必須化、Streamable HTTP 完全移行</td></tr>
+<tr><td>2025-03-26</td><td>Final</td><td>Streamable HTTP 導入 (HTTP+SSE を deprecate)</td></tr>
+<tr><td>2024-11-05</td><td>Legacy</td><td>初期仕様 (HTTP+SSE)、互換目的のみ</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Transport は 2 種類</strong>:</p>
+<ul>
+<li><strong>STDIO</strong> — クライアントがサーバーをサブプロセス起動。ローカル MCP 専用 (Claude Desktop でローカルファイルを読むなど)</li>
+<li><strong>Streamable HTTP</strong> — 単一 URL (例 <code>https://api.example.com/mcp</code>) が POST/GET を受ける。<em>Web UI コネクタとして繋ぐ場合はこちら一択</em></li>
+</ul>
+
+<div class="callout info">
+<span class="icon">💡</span>
+<div class="body"><strong>覚えるべきは 1 つだけ</strong>: 自社サービスを Claude.ai / ChatGPT / Grok の <strong>Web UI</strong> に繋ぐなら、必ず <code>Streamable HTTP</code> ベースの <strong>Remote MCP Server</strong> を実装する。STDIO はローカルアプリ用なので Web UI からは届かない。</div>
+</div>
+
+<h3>1.4 公式 SDK (Tier 1 推奨)</h3>
+<p>新規実装で OAuth helper まで揃っているのは <strong>TypeScript</strong> と <strong>Python (FastMCP)</strong>。次点で C#・Go。それ以外は OAuth まわりを自前で書く必要が出てくる。</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>言語</th><th>Tier</th><th>パッケージ</th><th>OAuth Helper</th></tr></thead>
+<tbody>
+<tr><td>TypeScript</td><td><span class="badge success">Tier 1</span></td><td><code>@modelcontextprotocol/sdk</code></td><td><span class="check-yes">◯</span> 両方向</td></tr>
+<tr><td>Python</td><td><span class="badge success">Tier 1</span></td><td><code>mcp</code> / <code>fastmcp</code></td><td><span class="check-yes">◯</span> 完備</td></tr>
+<tr><td>C#</td><td><span class="badge success">Tier 1</span></td><td><code>csharp-sdk</code></td><td>ASP.NET 統合</td></tr>
+<tr><td>Go</td><td><span class="badge success">Tier 1</span></td><td><code>go-sdk</code></td><td><span class="check-partial">△</span></td></tr>
+<tr><td>Java / Kotlin</td><td><span class="badge warn">Tier 2</span></td><td>各 <code>*-sdk</code></td><td>Spring Security 等で自力</td></tr>
+<tr><td>Rust / Swift / Ruby / PHP</td><td>Tier 3</td><td>各 <code>*-sdk</code></td><td>自力実装中心</td></tr>
+</tbody>
+</table>
+</div>
+
+</section>
+
+<!-- ===== Chapter 2: Web UIs ===== -->
+<section id="ch-uis">
+<h2><span class="num">2</span>各 Web UI の対応状況</h2>
+<p class="lead">2026 年 5 月時点、主要 4 UI すべてが MCP コネクタを受け入れる。ただし対応プラン・審査・配信方法・認証の柔軟性に差がある。</p>
+
+<h3>2.1 Claude.ai (Anthropic) — 本家 / 最も成熟</h3>
+<ul>
+<li><strong>2025 年 5 月にベータ提供開始</strong>。Free でも 1 個利用可、Pro/Max/Team/Enterprise で複数追加可</li>
+<li><strong>個人での追加</strong>: Settings → Connectors → <code>+</code> Add custom connector に URL を貼る</li>
+<li><strong>組織配信</strong>: Owner が Organization settings → Connectors に登録 → 全メンバーに表示</li>
+<li><strong>Connector Directory</strong>: Anthropic 公式の申請窓口経由で受付。手動レビュー約 2 週間。<em>tool annotation (<code>title</code>, <code>readOnlyHint</code>, <code>destructiveHint</code>) の不足が却下原因の約 30%</em></li>
+<li><strong>375+ コネクタ</strong>がディレクトリに掲載済み</li>
+</ul>
+
+<h3>2.2 ChatGPT (OpenAI) — Developer Mode + Apps SDK</h3>
+<ul>
+<li>2 つのレイヤー: <strong>Developer Mode</strong> (個人/組織向けカスタム MCP) と <strong>Apps SDK</strong> (Directory 公開)</li>
+<li><strong>Plus/Pro でベータ利用可</strong>。Business/Enterprise/Edu は admin 経由で RBAC 制御</li>
+<li><strong>2025-12-17 から Apps Directory submission 受付開始</strong>、2026 初頭から段階的公開</li>
+<li><strong>カスタム API キー / mTLS は明示的に非対応</strong>。OAuth 2.1 + PKCE / CIMD / DCR のみ</li>
+<li>審査要件: <strong>MFA/SMS 認証不可</strong>のデモアカウント、Privacy Policy 必須、CSP 必須</li>
+</ul>
+
+<h3>2.3 Grok (xAI) — 2026/5 GA、後発だが揃っている</h3>
+<ul>
+<li><strong>2026 年 5 月 6 日に Connectors 正式公開</strong> (Web/iOS/Android)</li>
+<li><strong>"Bring Your Own MCP"</strong> でカスタム MCP URL を直接追加可</li>
+<li>Built-in: GitHub, Notion, Linear, Google Workspace, Microsoft 365</li>
+<li>有料プラン限定 (Free tier は connector メニュー非表示)。具体的プラン区分は <span class="badge warn">未確認</span></li>
+<li>Connector Directory / 公開審査の仕組みは未整備 <span class="badge warn">未確認</span></li>
+</ul>
+
+<h3>2.4 Microsoft Copilot — エンタープライズ志向、ハードル高</h3>
+<ul>
+<li><strong>Copilot Studio</strong> + <strong>M365 Copilot</strong> 双方で MCP サポート</li>
+<li><strong>M365 Copilot フルライセンス必須</strong>(2025-11-19 以降、約 $30/月/ユーザー)、Frontier プログラム enrollment 前提</li>
+<li><strong>Entra ID テナント前提の認証</strong>、Admin Center → Copilot → Frontier ON で有効化</li>
+<li>個人向け Copilot Pro/Free での MCP は限定的 <span class="badge warn">未確認</span></li>
+</ul>
+
+<h3>2.5 比較表 (社内利用判断のための一覧)</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>項目</th><th>Claude.ai</th><th>ChatGPT</th><th>Grok</th><th>M365 Copilot</th></tr></thead>
+<tbody>
+<tr><td>MCP 対応</td><td><span class="check-yes">◎ 本家</span></td><td><span class="check-yes">◯</span></td><td><span class="check-yes">◯</span></td><td><span class="check-yes">◯</span></td></tr>
+<tr><td>提供開始</td><td>2025-05</td><td>2025-09 (Dev Mode)<br>2025-12 (Apps SDK)</td><td>2026-05</td><td>2025〜 (Frontier)</td></tr>
+<tr><td>Free プランで追加可</td><td><span class="check-yes">◯ (1個)</span></td><td><span class="check-no">×</span></td><td><span class="check-no">×</span></td><td><span class="check-no">×</span></td></tr>
+<tr><td>個人有料での追加</td><td>Pro/Max <span class="check-yes">◯</span></td><td>Plus/Pro <span class="check-yes">◯</span></td><td>有料 <span class="check-yes">◯</span></td><td><span class="check-no">×</span> (要 M365)</td></tr>
+<tr><td>書き込み (write)</td><td><span class="check-yes">◯</span></td><td><span class="check-yes">◯</span></td><td><span class="check-yes">◯</span></td><td><span class="check-yes">◯</span></td></tr>
+<tr><td>組織全体配信</td><td>Team/Ent <span class="check-yes">◯</span></td><td>Business/Ent <span class="check-yes">◯</span></td><td><span class="badge warn">未確認</span></td><td>Admin Center <span class="check-yes">◯</span></td></tr>
+<tr><td>RBAC</td><td><span class="check-partial">限定的</span></td><td>Enterprise/Edu <span class="check-yes">◯</span></td><td><span class="badge warn">未確認</span></td><td>Entra ID <span class="check-yes">◯</span></td></tr>
+<tr><td>公開ディレクトリ</td><td>Connector Directory<br>(手動, 約 2 週)</td><td>App Directory<br>(自動+手動)</td><td><span class="check-no">なし</span></td><td>限定的</td></tr>
+<tr><td>Transport</td><td>SSE / Streamable HTTP</td><td>SSE / Streaming HTTP</td><td><span class="badge warn">同等想定</span></td><td>HTTP</td></tr>
+<tr><td>Auth 方式</td><td>OAuth 2.1 + DCR</td><td>OAuth / None / Mixed<br>API Key 不可</td><td>OAuth (任意)</td><td>Entra ID / OAuth</td></tr>
+<tr><td>VPN 内サーバー接続</td><td><span class="check-no">不可</span> (要 Tunnel)</td><td><span class="check-no">不可</span></td><td><span class="check-no">不可</span></td><td>Entra Private Network 可</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout tip">
+<span class="icon">🎯</span>
+<div class="body"><strong>戦略的示唆</strong>: 1 つの MCP サーバーが 4 UI 全部で動く。最初は <strong>Claude.ai を主ターゲット</strong>に作り、ChatGPT/Grok は同じサーバーを URL 登録するだけ。Microsoft Copilot は Entra ID 連携が要件になるため別建てで考える。</div>
+</div>
+
+</section>
+
+<!-- ===== Chapter 3: Auth ===== -->
+<section id="ch-auth">
+<h2><span class="num">3</span>認証アーキテクチャ</h2>
+<p class="lead">MCP の認証は OAuth 2.1 + 4 つの RFC を組み合わせる。鍵は「自前で OAuth サーバーを書かなくていい」設計。</p>
+
+<h3>3.1 必須 RFC 群</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>RFC</th><th>役割</th><th>MCP での要件</th></tr></thead>
+<tbody>
+<tr><td><a href="https://datatracker.ietf.org/doc/html/rfc9728" target="_blank">RFC 9728</a></td><td>Protected Resource Metadata</td><td>MCP server <strong>MUST</strong>。<code>/.well-known/oauth-protected-resource</code> で <code>authorization_servers</code> を公開</td></tr>
+<tr><td><a href="https://datatracker.ietf.org/doc/html/rfc8414" target="_blank">RFC 8414</a></td><td>Authorization Server Metadata</td><td>AS <strong>MUST</strong>。<code>/.well-known/oauth-authorization-server</code></td></tr>
+<tr><td><a href="https://datatracker.ietf.org/doc/html/rfc7591" target="_blank">RFC 7591</a></td><td>Dynamic Client Registration (DCR)</td><td>Client/AS <strong>SHOULD</strong>。Claude.ai が URL 貼るだけで繋がる仕組みの根幹</td></tr>
+<tr><td><a href="https://www.rfc-editor.org/rfc/rfc8707.html" target="_blank">RFC 8707</a></td><td>Resource Indicators</td><td>Client <strong>MUST</strong>。<code>resource</code> パラメータで token の audience を縛り、Confused Deputy 攻撃を防ぐ</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>3.2 ロール分離 (重要)</h3>
+<p>MCP は OAuth 2.1 の 3 ロールを厳密に踏襲する:</p>
+<div class="card-grid">
+  <div class="card">
+    <div class="card-title">🛡 Resource Server</div>
+    <div class="card-body"><strong>= MCP server 本体</strong>。Bearer token を検証してリソースを返すだけ。<em>OAuth サーバーを兼ねる必要なし</em></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📱 Client</div>
+    <div class="card-body"><strong>= Claude.ai / ChatGPT</strong>。ユーザーの代理でリクエスト。DCR でクライアント登録</div>
+  </div>
+  <div class="card">
+    <div class="card-title">🔐 Authorization Server</div>
+    <div class="card-body"><strong>外部委譲可能</strong>。Auth0 / WorkOS / Stytch / Cloudflare / Keycloak 等のホスト型 IdP を利用できる</div>
+  </div>
+</div>
+
+<div class="callout ok">
+<span class="icon">✅</span>
+<div class="body"><strong>これが MCP 認証設計の最大の利点</strong>: MCP サーバーは Resource Server だけを担えばよく、Authorization Server は外部の既存 OAuth プロバイダ (Auth0/WorkOS/Cloudflare 等) に委譲できる。自前で OAuth サーバーを書く必要がない。</div>
+</div>
+
+<h3>3.3 典型的な認証フロー</h3>
+<div class="flow">Client (Claude.ai)        MCP Server (RS)        Authorization Server
+       │                         │                         │
+       │── 1. MCP request ──────▶│                         │
+       │     (no token)          │                         │
+       │◀─ 2. 401 Unauthorized ──│                         │
+       │   WWW-Authenticate:     │                         │
+       │   Bearer resource_      │                         │
+       │   metadata="https://    │                         │
+       │   mcp.example.com/      │                         │
+       │   .well-known/oauth-    │                         │
+       │   protected-resource"   │                         │
+       │                         │                         │
+       │── 3. GET PRM ──────────▶│                         │
+       │◀─ {authorization_       │                         │
+       │     servers: [...]} ────│                         │
+       │                         │                         │
+       │── 4. GET AS metadata ────────────────────────────▶│
+       │◀─ AS metadata ───────────────────────────────────│
+       │                         │                         │
+       │── 5. POST /register (DCR, optional) ─────────────▶│
+       │◀─ {client_id, ...} ─────────────────────────────│
+       │                         │                         │
+       │── 6. GET /authorize ─────────────────────────────▶│
+       │     ?response_type=code │                         │
+       │     &amp;code_challenge=... │  (PKCE S256 必須)        │
+       │     &amp;resource=https://mcp.example.com (RFC 8707)  │
+       │                         │   ユーザーが同意           │
+       │◀─ 7. redirect ?code=... ────────────────────────│
+       │                         │                         │
+       │── 8. POST /token ────────────────────────────────▶│
+       │     code, code_verifier │                         │
+       │     resource=https://mcp.example.com              │
+       │◀─ 9. {access_token (aud=mcp.example.com),         │
+       │       refresh_token} ───────────────────────────│
+       │                         │                         │
+       │── 10. MCP request ─────▶│                         │
+       │   Authorization: Bearer │ Validate aud == self    │
+       │◀─ 11. MCP response ─────│                         │</div>
+
+<h3>3.4 API Key で繋ぎたい場合</h3>
+<div class="callout warn">
+<span class="icon">⚠️</span>
+<div class="body">
+<p><strong>Web UI コネクタとして API Key / 静的 Bearer Token で繋ぐのは事実上不可</strong>:</p>
+<ul>
+<li><strong>ChatGPT</strong>: 公式に「カスタム API キー / mTLS は非対応」と明言</li>
+<li><strong>Claude.ai</strong>: UI から任意 Bearer ヘッダ指定不可。OAuth に見せかける薄いラッパーが必要</li>
+<li><strong>Claude API (MCP Connector)</strong>: SDK 経由ならアプリ側が事前取得した access token を直接渡せる</li>
+</ul>
+<p>つまり <strong>「OAuth 2.1 を立てる」が事実上の必須要件</strong>。ただし AS は既製品で OK。</p>
+</div>
+</div>
+
+<h3>3.5 OAuth Authorization Server の選択肢</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>AS</th><th>DCR</th><th>MCP テンプレ</th><th>料金</th><th>コメント</th></tr></thead>
+<tbody>
+<tr><td><strong>Cloudflare workers-oauth-provider</strong></td><td><span class="check-yes">◯</span></td><td><span class="check-yes">◯</span> Notion 採用実績</td><td>Workers 内</td><td>Worker と同居最良</td></tr>
+<tr><td><strong>Auth0 (Auth for MCP)</strong></td><td><span class="check-yes">◯</span></td><td><span class="check-yes">◯</span> AWS AgentCore 公式</td><td>Free 〜</td><td>2026-05 GA</td></tr>
+<tr><td><strong>WorkOS AuthKit</strong></td><td><span class="check-yes">◯</span></td><td><span class="check-yes">◯</span></td><td>ユーザー課金</td><td>SSO/SCIM/FGA 全部入り</td></tr>
+<tr><td><strong>Stytch Connected Apps</strong></td><td><span class="check-yes">◯</span></td><td><span class="check-yes">◯</span></td><td>要問合せ</td><td>B2B / RBAC 内蔵</td></tr>
+<tr><td><strong>Keycloak (OSS)</strong></td><td><span class="check-yes">◯</span></td><td>公式ガイド</td><td>自前ホスト</td><td>オンプレ要件の第一候補</td></tr>
+<tr><td>AWS Cognito</td><td><span class="check-no">×</span></td><td><span class="check-partial">△</span> AgentCore で固定 client</td><td>5万 MAU 無料</td><td>DCR 非対応で Claude.ai 接続に不向き</td></tr>
+</tbody>
+</table>
+</div>
+
+</section>
+
+<!-- ===== Chapter 4: Implementation ===== -->
+<section id="ch-impl">
+<h2><span class="num">4</span>実装手順とホスティング</h2>
+<p class="lead">「何で書いて、どこに置くか」。最短ルートは Cloudflare Workers か Vercel + Next.js。AWS 統合要件があれば AgentCore Runtime。</p>
+
+<h3>4.1 ホスティング選択肢 比較表</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>ホスティング</th><th>推奨 SDK</th><th>OAuth</th><th>Stateful</th><th>独自ドメイン</th><th>料金感</th><th>強み</th></tr></thead>
+<tbody>
+<tr><td><strong>Cloudflare Workers</strong><br><code>McpAgent + workers-oauth-provider</code></td><td>TS</td><td><span class="check-yes">◎</span></td><td><span class="check-yes">◎</span> DO</td><td><span class="check-yes">◎</span></td><td>$5/月〜</td><td>Edge / OAuth 同居 / Notion 採用</td></tr>
+<tr><td><strong>Vercel</strong><br><code>mcp-handler / xmcp</code></td><td>TS</td><td><span class="check-yes">◯</span></td><td><span class="check-yes">◯</span> Fluid</td><td><span class="check-yes">◎</span></td><td>Hobby 無料</td><td>Next.js 同居 / Firewall</td></tr>
+<tr><td><strong>AWS Lambda + API GW</strong></td><td>Py/TS</td><td><span class="check-partial">△</span></td><td><span class="check-partial">△</span> DDB</td><td><span class="check-yes">◯</span></td><td>従量</td><td>AWS 統合 / SSE は Function URL 推奨</td></tr>
+<tr><td><strong>Bedrock AgentCore Runtime</strong></td><td>Python</td><td><span class="check-yes">◎</span></td><td><span class="check-yes">◎</span></td><td><span class="check-partial">△</span></td><td>従量</td><td>AWS マネージド / Cognito/Auth0 統合</td></tr>
+<tr><td>Google Cloud Run</td><td>任意</td><td><span class="check-partial">△</span></td><td><span class="check-yes">◯</span></td><td><span class="check-yes">◎</span></td><td>秒課金</td><td>コンテナ自由</td></tr>
+<tr><td>Azure Functions / Container Apps</td><td>C#/TS/Py</td><td><span class="check-partial">△</span></td><td><span class="check-yes">◯</span></td><td><span class="check-yes">◎</span></td><td>従量</td><td>M365 連携と相性</td></tr>
+<tr><td>自前 VPS / K8s</td><td>任意</td><td><span class="check-no">×</span></td><td><span class="check-yes">◎</span></td><td><span class="check-yes">◎</span></td><td>固定費</td><td>完全自由</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>4.2 必須インフラ要件</h3>
+<ul>
+<li><strong>HTTPS 公開 URL</strong> (Anthropic/OpenAI の IP から到達可能)。VPN 内不可</li>
+<li><strong>Streamable HTTP transport</strong>: 単一 URL で POST + GET。<code>Accept: application/json, text/event-stream</code> を受ける</li>
+<li><strong><code>MCP-Protocol-Version</code> ヘッダ検証</strong> (不一致は 400)</li>
+<li><strong>Origin ヘッダ検証</strong> (DNS rebinding 攻撃対策)</li>
+<li><strong><code>/.well-known/oauth-protected-resource</code></strong> でメタデータ配信</li>
+<li><strong>401 時の <code>WWW-Authenticate</code> ヘッダ</strong>: <code>Bearer resource_metadata="..."</code></li>
+<li><strong>セッション管理</strong>: <code>Mcp-Session-Id</code> ヘッダで識別。stateless でも動くが elicitation/sampling/進捗通知 を使うなら stateful 化</li>
+</ul>
+
+<h3>4.3 実装 5 ステップ (推奨経路: Cloudflare Workers + GitHub OAuth テンプレ)</h3>
+<ol class="steps">
+  <li>
+    <div class="step-title">テンプレからプロジェクト作成</div>
+    <div class="step-body"><code>npm create cloudflare@latest -- --template=cloudflare/ai/demos/remote-mcp-github-oauth</code><br>OAuth プロバイダ + MCP server がワンセットで雛形に入っている</div>
+  </li>
+  <li>
+    <div class="step-title">Tool を実装する</div>
+    <div class="step-body"><code>McpAgent</code> を継承し、<code>this.server.tool(name, schema, handler)</code> で社内 API を 3〜5 個ラップ。必ず <code>title</code> / <code>readOnlyHint</code> / <code>destructiveHint</code> を annotation として付ける (Claude Directory 審査の最大の落とし穴)</div>
+  </li>
+  <li>
+    <div class="step-title">OAuth と結線</div>
+    <div class="step-body"><code>workers-oauth-provider</code> で AS を内包させるか、Auth0/WorkOS を外付け。<code>/.well-known/oauth-protected-resource</code> で <code>authorization_servers</code> を公開</div>
+  </li>
+  <li>
+    <div class="step-title">ローカルで動作確認</div>
+    <div class="step-body"><code>npx @modelcontextprotocol/inspector</code> でブラウザ UI を起動 → Streamable HTTP で <code>http://localhost:3000/mcp</code> を叩いて tools が見えるか確認</div>
+  </li>
+  <li>
+    <div class="step-title">デプロイして Claude.ai に登録</div>
+    <div class="step-body"><code>wrangler deploy</code> → 公開 URL を Claude.ai → Settings → Connectors → + Add custom connector に貼り付け。OAuth が走ってツールが使えるようになる</div>
+  </li>
+</ol>
+
+<h3>4.4 既存サービスの参考実装</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>サービス</th><th>URL</th><th>認証</th><th>実装スタック</th></tr></thead>
+<tbody>
+<tr><td>GitHub MCP</td><td><code>github/github-mcp-server</code></td><td>GitHub App / OAuth</td><td>Go</td></tr>
+<tr><td>Notion MCP</td><td><code>https://mcp.notion.com/mcp</code></td><td>OAuth 2.1 + PKCE (DCR)</td><td>Cloudflare Workers + workers-oauth-provider</td></tr>
+<tr><td>Stripe MCP</td><td><code>https://mcp.stripe.com</code></td><td>OAuth / Restricted API Key</td><td>公式ホスト</td></tr>
+<tr><td>Linear MCP</td><td>(remote)</td><td>OAuth</td><td>—</td></tr>
+<tr><td>Cloudflare 自社 MCP 群</td><td><code>cloudflare/ai</code> demos</td><td>workers-oauth-provider</td><td>TS / Workers</td></tr>
+</tbody>
+</table>
+</div>
+
+<details>
+<summary>サンプルコード (TypeScript / Cloudflare Workers)</summary>
+<div class="code-block-header">app.ts</div>
+<pre><code>import { McpAgent } from "agents/mcp";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+
+export class MyMCP extends McpAgent {
+  server = new McpServer({ name: "Internal CRM", version: "1.0.0" });
+
+  async init() {
+    this.server.tool(
+      "search_customers",
+      "顧客名や ID で社内 CRM を検索する",
+      { query: z.string() },
+      async ({ query }) =&gt; {
+        const r = await fetch(`https://crm.internal/api/search?q=${query}`, {
+          headers: { Authorization: `Bearer ${this.props.accessToken}` }
+        });
+        return { content: [{ type: "text", text: await r.text() }] };
+      },
+      { annotations: { title: "顧客検索", readOnlyHint: true } }
+    );
+  }
+}
+
+export default new OAuthProvider({
+  apiHandler: MyMCP.serve("/mcp"),
+  defaultHandler: GitHubHandler,
+  authorizeEndpoint: "/authorize",
+  tokenEndpoint: "/token",
+  clientRegistrationEndpoint: "/register",
+});
+</code></pre>
+</details>
+
+</section>
+
+<!-- ===== Chapter 5: Security ===== -->
+<section id="ch-sec">
+<h2><span class="num">5</span>セキュリティと運用</h2>
+<p class="lead">攻撃面が増えるため、Confused Deputy / Token Passthrough / DNS Rebinding 等の対策が必須。</p>
+
+<h3>5.1 必須セキュリティ対策</h3>
+<div class="card-grid">
+  <div class="card">
+    <div class="card-title">🎯 Audience Binding</div>
+    <div class="card-body">RFC 8707 の <code>resource</code> を必ず指定。RS は token の <code>aud</code> claim が自分宛か検証する <strong>MUST</strong></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🔑 PKCE S256</div>
+    <div class="card-body">パブリック・コンフィデンシャル問わず <strong>必須</strong>。認可コード横取り攻撃の防止</div>
+  </div>
+  <div class="card">
+    <div class="card-title">⏱ 短命トークン</div>
+    <div class="card-body">Access token 1 時間 + Refresh rotation (Notion 例)。Public client は rotation <strong>MUST</strong></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🚫 Token Passthrough 禁止</div>
+    <div class="card-body">受信した token を下流 API にそのまま転送 <strong>MUST NOT</strong>。MCP server が別途 OAuth client として新 token を取得する</div>
+  </div>
+  <div class="card">
+    <div class="card-title">🛡 Per-Client Consent</div>
+    <div class="card-body">DCR で攻撃者が悪意ある <code>redirect_uri</code> を登録できないよう、<code>__Host-</code> プレフィックス + client_id バインドの consent cookie</div>
+  </div>
+  <div class="card">
+    <div class="card-title">🌐 Origin 検証</div>
+    <div class="card-body">DNS rebinding 対策で Origin ヘッダ検証必須。ローカル時は 127.0.0.1 bind</div>
+  </div>
+</div>
+
+<h3>5.2 運用視点のチェックリスト</h3>
+<ul>
+<li><strong>レート制限</strong>: Cloudflare Rate Limiting / Vercel Firewall / API Gateway Usage Plan</li>
+<li><strong>監査ログ</strong>: <code>(timestamp, user_id, tool_name, args hash, latency, status)</code> を構造化ログ出力</li>
+<li><strong>スコープ最小化</strong>: tool ごとに scope を割り、<code>withMcpAuth</code> の <code>requiredScopes</code> で deny-by-default</li>
+<li><strong>マルチテナント</strong>: 1 ユーザー = 1 OAuth grant。Durable Object や DB 行をユーザー単位に分割</li>
+<li><strong>テストアカウント</strong>: MFA/SMS 認証なしで用意 (Claude/ChatGPT の Directory 審査要件)</li>
+<li><strong>CSP 設定</strong>: ChatGPT Apps SDK 審査では fetch 元ドメイン制限が必須</li>
+</ul>
+
+<div class="callout danger">
+<span class="icon">🚨</span>
+<div class="body"><strong>最大のリスク: Confused Deputy 攻撃</strong> — MCP server が下流 API の OAuth ブリッジになる場合、static client_id + DCR + 同意 cookie の組み合わせで攻撃が成立する。MCP server 自身で per-client consent ページを表示し、第三者 AS にフォワードする前に承認を取ること。</div>
+</div>
+
+</section>
+
+<!-- ===== Chapter 6: Timeline ===== -->
+<section id="ch-plan">
+<h2><span class="num">6</span>工数と段階的アプローチ</h2>
+<p class="lead">「いきなり本番」ではなく 3 段階で立ち上げる。最小 PoC は 1 日、OAuth 込み MVP は 1 週間、本番品質で 1.5 ヶ月。</p>
+
+<h3>6.1 段階別の工数感 (1 人換算)</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>フェーズ</th><th>内容</th><th>工数目安</th></tr></thead>
+<tbody>
+<tr><td><strong>P1. 最小 PoC</strong><br>(認証なし or 固定 Bearer)</td><td>Cloudflare <code>remote-mcp-authless</code> or Vercel <code>mcp-handler</code> 1 ファイル<br>tool 3 個 + Inspector 動作確認 + Claude.ai 接続</td><td><span class="badge success">0.5〜1 日</span></td></tr>
+<tr><td><strong>P2. OAuth 込み MVP</strong></td><td>DCR 対応 AS (workers-oauth-provider / Auth0) 結線<br><code>/.well-known/oauth-protected-resource</code> 提供<br>Claude.ai と ChatGPT 両方で動作確認</td><td><span class="badge primary">3〜5 日</span></td></tr>
+<tr><td><strong>P3. 本番品質</strong></td><td>監査ログ / レート制限 / マルチテナント / scope 設計<br>E2E テスト / ドキュメント整備 / Connector Directory 申請</td><td><span class="badge accent">3〜6 週間</span></td></tr>
+<tr><td>P4. エンタープライズ / SOC2</td><td>IAM / ログ保持 / DR / SAST・DAST / Pen Test / 法務</td><td>追加 4〜8 週間 <span class="badge warn">未確認</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>6.2 段階的ロードアップ</h3>
+<ol class="steps">
+  <li>
+    <div class="step-title">P1: 「動くもの」を 1 日で出す</div>
+    <div class="step-body">認証なしで OK。社内 GitHub API や DB を 3 tool だけ公開。Cloudflare の <code>remote-mcp-authless</code> テンプレに 100 行追加で完成。社内デモで価値を共有</div>
+  </li>
+  <li>
+    <div class="step-title">P2: 1 週間で「セキュアに繋がるもの」</div>
+    <div class="step-body"><code>workers-oauth-provider</code> + GitHub OAuth で本格認証。Claude.ai と ChatGPT 両方から繋いで動作確認。社内 5 人に配布して FB を取る</div>
+  </li>
+  <li>
+    <div class="step-title">P3: 1.5 ヶ月で「全社配信品質」</div>
+    <div class="step-body">監査ログ / RBAC / scope 設計 / マルチテナント。Team Owner が組織配信できる状態に。社外公開する場合は Connector Directory 申請</div>
+  </li>
+  <li>
+    <div class="step-title">P4: 外部公開・SLA・SOC2 (任意)</div>
+    <div class="step-body">SaaS としてプロダクト化する場合のみ。法務レビュー / Pen Test / DR テスト</div>
+  </li>
+</ol>
+
+</section>
+
+<!-- ===== Chapter 7: 導入判断軸 ===== -->
+<section id="ch-zen">
+<h2><span class="num">7</span>組織導入時の判断軸</h2>
+<p class="lead">既存社内システム資産を活かして MCP コネクタ化を進める時の、現実的な意思決定ポイント。</p>
+
+<h3>7.1 アーキテクチャ推奨パターン</h3>
+<div class="decision">
+<div class="decision-title">✨ Recommendation</div>
+<p><strong>2 段構えで進めるのが安全</strong>:</p>
+<ol>
+<li><strong>P1-P2 を 1 〜 2 週間で完了</strong>: Cloudflare Workers + workers-oauth-provider で主要社内システム (Wiki / Ticketing / DWH / CRM 等) のうち 1-2 個を MCP 化。Claude.ai の Pro/Max ユーザー向けに「自分で URL を貼って繋ぐ」運用で配布</li>
+<li><strong>P3 を 1.5-2 ヶ月で完了</strong>: 監査ログと組織配信を実装。Claude Team / Enterprise の Owner が組織レベルで配信できる状態にする</li>
+</ol>
+</div>
+
+<h3>7.2 既存資産との接続パターン</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>既存資産</th><th>MCP コネクタ化での扱い</th></tr></thead>
+<tbody>
+<tr><td><strong>Bedrock AgentCore</strong> (社内 AI エージェント基盤)</td><td>AgentCore Runtime は MCP Protocol を正式サポートするため、既存エージェントを MCP server として再公開可能。ただし URL が AWS 固定形式なので Web UI 接続には CloudFront 等を前段配置</td></tr>
+<tr><td><strong>VPC / プライベートリンク</strong> 内のサービス</td><td>Web UI からは public internet 経由のみ到達可。VPC 内 MCP は<strong>不可</strong>。Cloudflare Tunnel か Lambda Function URL で公開エンドポイント化が必要</td></tr>
+<tr><td><strong>SaaS 連携</strong> (CRM / 業務システム)</td><td>SaaS のデータを露出する MCP server を別途立てる。SaaS 側は OAuth Client として動作 (Token Passthrough は<strong>禁止</strong>、新トークンを再取得する)</td></tr>
+<tr><td><strong>IAM ポリシー</strong> (アクセスキー方式を避けたい)</td><td>OAuth 2.1 + DCR は IAM アクセスキー方式と無関係。Auth0 / WorkOS のような IdP 委譲なら長期キーを発行せず短命トークンで運用可能</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>7.3 配信戦略の選択肢</h3>
+<ul>
+<li><strong>社内利用が主目的</strong>: Claude Team / Enterprise Owner が組織コネクタとして配信 → メンバーは自分のアカウントで OAuth 認証して有効化</li>
+<li><strong>社外パートナーにも開放したい</strong>: Connector Directory への申請 + ChatGPT Apps Directory 申請の二本立て</li>
+<li><strong>既存 AI エージェント基盤がある場合</strong>: 既存基盤を優先しつつ、Web UI コネクタ化は P1 (最小 PoC) だけ間に合わせて<em>並行で進める</em>のが現実的</li>
+</ul>
+
+<div class="callout info">
+<span class="icon">📌</span>
+<div class="body"><strong>意思決定が必要な論点</strong>:
+<ol>
+<li>OAuth Authorization Server を <em>どこに置くか</em> (Cloudflare 同居 / Auth0 / WorkOS / Keycloak)</li>
+<li>最初に MCP 化する社内システムを<em>どれにするか</em> (使用頻度 × 機密度 × 既存 API 整備度で評価)</li>
+<li>Web UI コネクタを <em>個人配布</em> で始めるか <em>Team 組織配信</em> から始めるか (有料プラン契約の必要性)</li>
+<li>OAuth プロバイダ選定の基準: 既存 IdP 連携 / SSO 要件 / コスト / DCR 対応の有無</li>
+</ol></div>
+</div>
+
+</section>
+
+</div>
+
+<!-- ===== Footer / Sources ===== -->
+<footer id="ch-refs">
+<div class="footer-inner">
+<h2 style="margin-top: 0;"><span class="num">8</span>出典・参考リンク</h2>
+
+<h3>MCP 公式仕様</h3>
+<ul class="sources">
+<li>📘 <a href="https://modelcontextprotocol.io/" target="_blank">MCP 公式トップ</a></li>
+<li>📘 <a href="https://modelcontextprotocol.io/specification/2025-11-25" target="_blank">仕様 2025-11-25 (Current)</a></li>
+<li>📘 <a href="https://modelcontextprotocol.io/specification/2025-06-18" target="_blank">仕様 2025-06-18</a></li>
+<li>📘 <a href="https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization" target="_blank">Authorization Spec</a></li>
+<li>📘 <a href="https://modelcontextprotocol.io/specification/2025-06-18/basic/security_best_practices" target="_blank">Security Best Practices</a></li>
+<li>📘 <a href="https://modelcontextprotocol.io/docs/concepts/transports" target="_blank">Transports Doc</a></li>
+<li>📘 <a href="https://modelcontextprotocol.io/docs/concepts/architecture" target="_blank">Architecture Doc</a></li>
+<li>📘 <a href="https://modelcontextprotocol.io/docs/sdk" target="_blank">SDK 一覧</a></li>
+<li>📘 <a href="https://github.com/modelcontextprotocol/" target="_blank">GitHub modelcontextprotocol</a></li>
+<li>📘 <a href="https://blog.modelcontextprotocol.io/posts/2026-mcp-roadmap/" target="_blank">2026 MCP Roadmap</a></li>
+</ul>
+
+<h3>RFC (認証関連)</h3>
+<ul class="sources">
+<li>📕 <a href="https://datatracker.ietf.org/doc/html/rfc9728" target="_blank">RFC 9728 Protected Resource Metadata</a></li>
+<li>📕 <a href="https://datatracker.ietf.org/doc/html/rfc8414" target="_blank">RFC 8414 Authorization Server Metadata</a></li>
+<li>📕 <a href="https://datatracker.ietf.org/doc/html/rfc7591" target="_blank">RFC 7591 Dynamic Client Registration</a></li>
+<li>📕 <a href="https://www.rfc-editor.org/rfc/rfc8707.html" target="_blank">RFC 8707 Resource Indicators</a></li>
+<li>📕 <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-13" target="_blank">OAuth 2.1 draft-13</a></li>
+</ul>
+
+<h3>各 LLM ベンダー (Web UI 接続)</h3>
+<ul class="sources">
+<li>🤖 <a href="https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp" target="_blank">Claude Custom Connectors (Help)</a></li>
+<li>🤖 <a href="https://support.claude.com/en/articles/11503834-build-custom-connectors-via-remote-mcp-servers" target="_blank">Claude: Build Custom Connectors</a></li>
+<li>🤖 <a href="https://claude.com/docs/connectors/custom/remote-mcp" target="_blank">Claude: Third party connectors</a></li>
+<li>🤖 <a href="https://claude.com/docs/connectors/building/submission" target="_blank">Claude: Connector Directory Submission</a></li>
+<li>🤖 <a href="https://platform.claude.com/docs/en/agents-and-tools/mcp-connector" target="_blank">Claude API: MCP Connector</a></li>
+<li>🤖 <a href="https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt-beta" target="_blank">ChatGPT Developer Mode &amp; MCP Apps</a></li>
+<li>🤖 <a href="https://developers.openai.com/apps-sdk" target="_blank">OpenAI Apps SDK</a></li>
+<li>🤖 <a href="https://developers.openai.com/apps-sdk/build/auth" target="_blank">OpenAI Apps SDK Auth</a></li>
+<li>🤖 <a href="https://developers.openai.com/api/docs/mcp" target="_blank">OpenAI Build MCP Servers</a></li>
+<li>🤖 <a href="https://developers.openai.com/apps-sdk/deploy/submission" target="_blank">OpenAI Apps SDK Submission</a></li>
+<li>🤖 <a href="https://docs.x.ai/grok/connectors" target="_blank">Grok Connectors Docs</a></li>
+<li>🤖 <a href="https://x.ai/news/grok-connectors" target="_blank">Grok Connectors Announcement</a></li>
+<li>🤖 <a href="https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/build-mcp-plugins" target="_blank">M365 Copilot MCP Plugins</a></li>
+<li>🤖 <a href="https://learn.microsoft.com/en-us/graph/mcp-server/use-enterprise-mcp-server-copilot-studio" target="_blank">Microsoft Enterprise MCP Server</a></li>
+</ul>
+
+<h3>実装・ホスティング</h3>
+<ul class="sources">
+<li>⚙️ <a href="https://developers.cloudflare.com/agents/model-context-protocol/" target="_blank">Cloudflare Agents MCP</a></li>
+<li>⚙️ <a href="https://developers.cloudflare.com/agents/model-context-protocol/authorization/" target="_blank">Cloudflare MCP Authorization</a></li>
+<li>⚙️ <a href="https://github.com/cloudflare/workers-oauth-provider" target="_blank">workers-oauth-provider</a></li>
+<li>⚙️ <a href="https://vercel.com/docs/mcp/deploy-mcp-servers-to-vercel" target="_blank">Vercel MCP Deploy</a></li>
+<li>⚙️ <a href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-mcp.html" target="_blank">AWS Bedrock AgentCore MCP</a></li>
+<li>⚙️ <a href="https://github.com/github/github-mcp-server" target="_blank">GitHub MCP Server (OSS)</a></li>
+<li>⚙️ <a href="https://github.blog/changelog/2025-09-04-remote-github-mcp-server-is-now-generally-available/" target="_blank">GitHub Remote MCP GA</a></li>
+<li>⚙️ <a href="https://github.com/makenotion/notion-mcp-server" target="_blank">Notion MCP Server</a></li>
+</ul>
+
+<h3>解説・分析記事</h3>
+<ul class="sources">
+<li>📰 <a href="https://workos.com/blog/best-mcp-server-authentication-providers" target="_blank">WorkOS: Best MCP Auth Providers</a></li>
+<li>📰 <a href="https://auth0.com/blog/mcp-specs-update-all-about-auth/" target="_blank">Auth0: MCP Specs Update</a></li>
+<li>📰 <a href="https://auth0.com/blog/add-remote-mcp-server-chatgpt/" target="_blank">Auth0 + ChatGPT MCP</a></li>
+<li>📰 <a href="https://stytch.com/blog/building-an-mcp-server-oauth-cloudflare-workers/" target="_blank">Stytch + Cloudflare MCP</a></li>
+<li>📰 <a href="https://sunpeak.ai/blogs/claude-connector-oauth-authentication/" target="_blank">Sunpeak: Claude Connector OAuth</a></li>
+<li>📰 <a href="https://www.infoq.com/news/2025/10/chat-gpt-mcp/" target="_blank">InfoQ: ChatGPT Adds MCP Support</a></li>
+<li>📰 <a href="https://markaicode.com/mcp-cursor-windsurf-ide-integration/" target="_blank">MCP with Cursor &amp; Windsurf</a></li>
+<li>📰 <a href="https://truthifi.com/education/mcp-connection-guide" target="_blank">MCP Connectors 全体ガイド 2026</a></li>
+</ul>
+
+<div class="footer-meta">
+<div>調査・執筆: <strong>zen-ops / Claude Code</strong> · 2026-05-23<br>本レポートは社内向け一次調査の集約版です。意思決定時は各ベンダーの最新ドキュメントで再確認してください。</div>
+<div>Powered by <strong>zen-ai-skills · web-publish</strong></div>
+</div>
+
+</div>
+</footer>
+
+</body>
+</html>
