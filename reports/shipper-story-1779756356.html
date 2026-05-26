@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipper AI App Builder | アイデアを本気のアプリに変える物語</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap');
+        
+        :root {
+            --neon-green: #39ff14;
+            --neon-purple: #c026ff;
+        }
+        
+        body {
+            background-color: #0a0a0f;
+            color: #e0e0ff;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        
+        .pixel-font {
+            font-family: 'Press Start 2P', system-ui;
+            image-rendering: pixelated;
+        }
+        
+        .neon-text {
+            text-shadow: 0 0 10px var(--neon-green),
+                        0 0 20px var(--neon-green);
+        }
+        
+        .neon-purple {
+            text-shadow: 0 0 10px var(--neon-purple),
+                        0 0 20px var(--neon-purple);
+        }
+        
+        .retro-border {
+            border: 4px solid #39ff14;
+            box-shadow: 0 0 15px #39ff14;
+        }
+        
+        .chapter-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .chapter-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4);
+        }
+        
+        .pixel-img {
+            image-rendering: pixelated;
+            border: 4px solid #1a1a2e;
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.3);
+        }
+        
+        .section-header {
+            background: linear-gradient(90deg, #1a1a2e, #16213e);
+            border-bottom: 3px solid #39ff14;
+        }
+        
+        .neon-button {
+            background: #39ff14;
+            color: #0a0a0f;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 15px #39ff14;
+        }
+        
+        .neon-button:hover {
+            background: #2ecc71;
+            box-shadow: 0 0 25px #39ff14;
+            transform: scale(1.05);
+        }
+        
+        .story-text {
+            line-height: 1.8;
+            font-size: 1.05rem;
+        }
+        
+        .stat {
+            background: rgba(26, 26, 46, 0.8);
+            border: 2px solid #39ff14;
+        }
+    </style>
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="web-publish">
+  <meta property="og:title" content="Shipper AI App Builder | アイデアを本気のアプリに変える物語">
+  <meta property="og:description" content="非エンジニアでも本格アプリを量産できる時代。Shipperで数時間〜数日でMVPを公開。">
+  <meta property="og:url" content="https://zen-jp.github.io/web-publish-cdn/reports/shipper-story-1779756356.html">
+  <meta property="og:image" content="https://raw.githubusercontent.com/zen-jp/web-publish-cdn/master/og/shipper-story-1779756356.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Shipper AI App Builder | アイデアを本気のアプリに変える物語">
+  <meta name="twitter:description" content="非エンジニアでも本格アプリを量産できる時代。Shipperで数時間〜数日でMVPを公開。">
+  <meta name="twitter:image" content="https://raw.githubusercontent.com/zen-jp/web-publish-cdn/master/og/shipper-story-1779756356.png">
+</head>
+<body class="bg-[#0a0a0f] text-[#e0e0ff]">
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 bg-[#0a0a0f]/95 border-b border-[#39ff14]/30 backdrop-blur-lg">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-x-4">
+                <div class="w-12 h-12 bg-[#39ff14] rounded-xl flex items-center justify-center">
+                    <span class="text-[#0a0a0f] text-3xl font-bold pixel-font">S</span>
+                </div>
+                <div>
+                    <span class="text-3xl font-bold tracking-tighter">Shipper</span>
+                    <span class="text-[#39ff14] text-sm block -mt-1">AI APP BUILDER</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-x-4">
+                <a href="https://shipper.now" target="_blank" 
+                   class="px-6 py-2.5 rounded-2xl border border-[#39ff14]/50 hover:bg-[#39ff14]/10 transition-colors flex items-center gap-x-2 text-sm font-medium">
+                    <i class="fas fa-globe"></i>
+                    <span>公式サイト</span>
+                </a>
+                <a href="https://app.shipper.now" target="_blank" 
+                   class="neon-button px-8 py-2.5 rounded-2xl text-sm font-bold flex items-center gap-x-2">
+                    <i class="fas fa-rocket"></i>
+                    <span>今すぐ無料で試す</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="max-w-7xl mx-auto px-6 pt-12 pb-20">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+                <div class="inline-flex items-center gap-x-2 px-4 py-1.5 rounded-full bg-[#39ff14]/10 text-[#39ff14] text-sm font-medium mb-6">
+                    <div class="w-2 h-2 bg-[#39ff14] rounded-full animate-pulse"></div>
+                    2026年最新AIツール
+                </div>
+                
+                <h1 class="text-6xl lg:text-7xl font-bold leading-none tracking-tighter mb-6">
+                    アイデアは<br>
+                    <span class="bg-gradient-to-r from-[#39ff14] to-[#c026ff] bg-clip-text text-transparent">あるのに</span><br>
+                    作れない？
+                </h1>
+                
+                <p class="text-2xl text-[#a0a0c0] mb-10 max-w-lg">
+                    非エンジニアでも<br>
+                    <span class="text-white font-semibold">本気のアプリを量産</span>できる時代が来た。
+                </p>
+                
+                <div class="flex flex-wrap gap-4">
+                    <a href="https://app.shipper.now" target="_blank"
+                       class="neon-button px-10 py-4 rounded-3xl text-lg font-bold flex items-center justify-center gap-x-3 shadow-xl">
+                        <i class="fas fa-play mr-1"></i>
+                        <span>今すぐアプリを作り始める</span>
+                    </a>
+                    
+                    <a href="#story" 
+                       class="px-8 py-4 rounded-3xl border border-white/30 hover:bg-white/5 transition-colors flex items-center gap-x-2 text-lg">
+                        <span>ストーリーを読む</span>
+                        <i class="fas fa-arrow-down"></i>
+                    </a>
+                </div>
+                
+                <div class="flex items-center gap-x-8 mt-10 text-sm">
+                    <div class="flex items-center">
+                        <div class="flex -space-x-2">
+                            <div class="w-8 h-8 bg-zinc-700 rounded-full border-2 border-[#0a0a0f]"></div>
+                            <div class="w-8 h-8 bg-zinc-700 rounded-full border-2 border-[#0a0a0f]"></div>
+                            <div class="w-8 h-8 bg-zinc-700 rounded-full border-2 border-[#0a0a0f]"></div>
+                        </div>
+                        <span class="ml-3 text-[#a0a0c0]">23,000人以上が利用中</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Hero Image -->
+            <div class="relative">
+                <img src="https://zen-jp.github.io/web-publish-cdn/reports/shipper-story-assets/chapter5.png" alt="Shipperでアイデアをアプリに変換" 
+                     class="w-full rounded-3xl pixel-img shadow-2xl border-4 border-[#39ff14]/30">
+                <div class="absolute -bottom-4 -right-4 bg-[#1a1a2e] px-6 py-3 rounded-2xl border border-[#39ff14] flex items-center gap-x-3">
+                    <div class="text-[#39ff14]">
+                        <i class="fas fa-check-circle text-2xl"></i>
+                    </div>
+                    <div class="text-sm">
+                        <div class="font-bold">評価額 $164.4M</div>
+                        <div class="text-[#a0a0c0] text-xs">従業員ゼロで実現</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- The Problem -->
+    <div id="story" class="bg-[#11111a] py-16">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-12">
+                <div class="inline-block px-4 py-1 bg-red-500/10 text-red-400 rounded-full text-sm font-medium mb-4">CHAPTER 01</div>
+                <h2 class="text-5xl font-bold tracking-tight">アイデアはあるのに、作れない…</h2>
+                <p class="mt-4 text-xl text-[#a0a0c0] max-w-2xl mx-auto">多くの起業家・クリエイターが直面する「永遠の壁」</p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <div class="lg:col-span-7">
+                    <img src="https://zen-jp.github.io/web-publish-cdn/reports/shipper-story-assets/chapter1.png" alt="Chapter 1: ストレスフルな開発現場" 
+                         class="w-full rounded-3xl pixel-img">
+                </div>
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="story-text text-lg">
+                        <p class="mb-4">企画書は山積み。アイデアは溢れている。</p>
+                        <p class="mb-4">でもエンジニアを雇うと<strong class="text-red-400">月100万円以上</strong>。</p>
+                        <p class="mb-4">外注すれば<strong class="text-red-400">300万円〜</strong>で3ヶ月待ち。</p>
+                        <p>バグだらけで納期遅れ… もう限界。</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="stat p-4 rounded-2xl">
+                            <div class="text-red-400 text-sm">開発期間</div>
+                            <div class="text-4xl font-bold text-white">2〜6ヶ月</div>
+                        </div>
+                        <div class="stat p-4 rounded-2xl">
+                            <div class="text-red-400 text-sm">初期コスト</div>
+                            <div class="text-4xl font-bold text-white">¥300万〜</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- The Transformation -->
+    <div class="max-w-7xl mx-auto px-6 py-20">
+        <div class="text-center mb-12">
+            <div class="inline-block px-4 py-1 bg-[#39ff14]/10 text-[#39ff14] rounded-full text-sm font-medium mb-4">CHAPTER 02</div>
+            <h2 class="text-5xl font-bold tracking-tight">数時間から数日でMVPへ</h2>
+            <p class="mt-4 text-xl text-[#a0a0c0]">Before → After の劇的な変化</p>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+                <img src="https://zen-jp.github.io/web-publish-cdn/reports/shipper-story-assets/chapter2.png" alt="Before/After: 混沌から秩序へ" class="w-full rounded-3xl pixel-img">
+            </div>
+            <div class="flex flex-col justify-center space-y-8">
+                <div>
+                    <h3 class="text-3xl font-bold mb-4 flex items-center gap-x-3">
+                        <span class="text-red-400">BEFORE</span>
+                    </h3>
+                    <ul class="space-y-3 text-lg">
+                        <li class="flex items-start gap-x-3"><i class="fas fa-times text-red-500 mt-1.5"></i> <span>無限の修正依頼とバグ</span></li>
+                        <li class="flex items-start gap-x-3"><i class="fas fa-times text-red-500 mt-1.5"></i> <span>エンジニアとの意思疎通コスト</span></li>
+                        <li class="flex items-start gap-x-3"><i class="fas fa-times text-red-500 mt-1.5"></i> <span>納期遅れと予算オーバー</span></li>
+                    </ul>
+                </div>
+                
+                <div class="pt-6 border-t border-white/10">
+                    <h3 class="text-3xl font-bold mb-4 flex items-center gap-x-3">
+                        <span class="text-[#39ff14]">AFTER with Shipper</span>
+                    </h3>
+                    <ul class="space-y-3 text-lg">
+                        <li class="flex items-start gap-x-3"><i class="fas fa-check text-[#39ff14] mt-1.5"></i> <span>チャットするだけで本格アプリ完成</span></li>
+                        <li class="flex items-start gap-x-3"><i class="fas fa-check text-[#39ff14] mt-1.5"></i> <span>AIが自動でバグ修正</span></li>
+                        <li class="flex items-start gap-x-3"><i class="fas fa-check text-[#39ff14] mt-1.5"></i> <span>数時間〜数日でMVP公開</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Advisor Chapter -->
+    <div class="bg-[#11111a] py-16">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-12">
+                <div class="inline-block px-4 py-1 bg-purple-500/10 text-purple-400 rounded-full text-sm font-medium mb-4">CHAPTER 03</div>
+                <h2 class="text-5xl font-bold tracking-tight">AI技術顧問＋開発チームを<br>同時に持つ</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <div class="lg:col-span-5 order-2 lg:order-1">
+                    <div class="space-y-6">
+                        <div class="story-text">
+                            <p class="mb-4">Shipperには<strong class="text-purple-400">AI Advisor</strong>が搭載されています。</p>
+                            <p class="mb-4">ただ作るだけでなく、</p>
+                            <ul class="space-y-2 pl-5">
+                                <li>• 市場トレンド分析</li>
+                                <li>• UX改善提案</li>
+                                <li>• 競合差別化戦略</li>
+                                <li>• 成長施策の提案</li>
+                            </ul>
+                            <p class="mt-4">まさに「技術顧問＋開発チーム」が月額数千円で手に入る。</p>
+                        </div>
+                        
+                        <div class="flex items-center gap-x-4 pt-4">
+                            <div class="px-5 py-3 bg-white/5 rounded-2xl text-sm">
+                                <span class="text-[#39ff14] font-bold">2人＋AI</span><br>
+                                <span class="text-xs text-[#a0a0c0]">で$164M企業を運営</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lg:col-span-7 order-1 lg:order-2">
+                    <img src="https://zen-jp.github.io/web-publish-cdn/reports/shipper-story-assets/chapter3.png" alt="Chapter 3: AI技術顧問と開発チーム" class="w-full rounded-3xl pixel-img">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pipeline Chapter -->
+    <div class="max-w-7xl mx-auto px-6 py-20">
+        <div class="text-center mb-12">
+            <div class="inline-block px-4 py-1 bg-[#39ff14]/10 text-[#39ff14] rounded-full text-sm font-medium mb-4">CHAPTER 04</div>
+            <h2 class="text-5xl font-bold tracking-tight">Shipper MVP Pipeline</h2>
+            <p class="mt-3 text-xl text-[#a0a0c0]">6ステップで誰でも本格アプリを完成</p>
+        </div>
+        
+        <div class="max-w-5xl mx-auto">
+            <img src="https://zen-jp.github.io/web-publish-cdn/reports/shipper-story-assets/chapter4.png" alt="Shipper 6ステップ パイプライン" class="w-full rounded-3xl pixel-img mb-10">
+            
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div class="bg-[#1a1a2e] p-5 rounded-2xl border border-[#39ff14]/30">
+                    <div class="text-[#39ff14] text-4xl font-bold mb-2">01</div>
+                    <div class="font-bold">Chat</div>
+                    <div class="text-sm text-[#a0a0c0]">普通の言葉でアイデアを伝える</div>
+                </div>
+                <div class="bg-[#1a1a2e] p-5 rounded-2xl border border-[#39ff14]/30">
+                    <div class="text-[#39ff14] text-4xl font-bold mb-2">02</div>
+                    <div class="font-bold">Design</div>
+                    <div class="text-sm text-[#a0a0c0]">AIが自動で美しいUI作成</div>
+                </div>
+                <div class="bg-[#1a1a2e] p-5 rounded-2xl border border-[#39ff14]/30">
+                    <div class="text-[#39ff14] text-4xl font-bold mb-2">03</div>
+                    <div class="font-bold">Code</div>
+                    <div class="text-sm text-[#a0a0c0]">フルスタックコードを自動生成</div>
+                </div>
+                <div class="bg-[#1a1a2e] p-5 rounded-2xl border border-[#39ff14]/30">
+                    <div class="text-[#39ff14] text-4xl font-bold mb-2">04</div>
+                    <div class="font-bold">DB &amp; Server</div>
+                    <div class="text-sm text-[#a0a0c0]">データベース・サーバー自動構築</div>
+                </div>
+                <div class="bg-[#1a1a2e] p-5 rounded-2xl border border-[#39ff14]/30">
+                    <div class="text-[#39ff14] text-4xl font-bold mb-2">05</div>
+                    <div class="font-bold">Self Fix</div>
+                    <div class="text-sm text-[#a0a0c0]">AIがバグを自動検知・修正</div>
+                </div>
+                <div class="bg-[#1a1a2e] p-5 rounded-2xl border border-[#39ff14]/30">
+                    <div class="text-[#39ff14] text-4xl font-bold mb-2">06</div>
+                    <div class="font-bold">Launch</div>
+                    <div class="text-sm text-[#a0a0c0]">即公開・収益化開始</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final Chapter -->
+    <div class="bg-gradient-to-br from-[#1a1a2e] to-[#0a0a0f] py-16 border-t border-[#39ff14]/20">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-12">
+                <div class="inline-block px-4 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-sm font-medium mb-4">CHAPTER 05</div>
+                <h2 class="text-5xl font-bold tracking-tight">非エンジニアでも<br>本物のアプリを量産できる</h2>
+            </div>
+            
+            <div class="max-w-4xl mx-auto text-center mb-12">
+                <p class="text-2xl text-[#c0c0e0]">
+                    Shipperを使えば、<br>
+                    <span class="font-bold text-white">プログラミングができなくても</span><br>
+                    世界に通用する本格的なプロダクトを<br>
+                    何個でも生み出せる時代になりました。
+                </p>
+            </div>
+            
+            <div class="flex justify-center">
+                <img src="https://zen-jp.github.io/web-publish-cdn/reports/shipper-story-assets/chapter5.png" alt="Chapter 5: 量産体制" class="max-w-[820px] w-full rounded-3xl pixel-img">
+            </div>
+        </div>
+    </div>
+
+    <!-- Benefits Summary -->
+    <div class="max-w-7xl mx-auto px-6 py-20">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold">Shipperがもたらす<br>ビジネスへの恩恵</h2>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="bg-[#1a1a2e] p-8 rounded-3xl border border-[#39ff14]/30">
+                <div class="text-5xl mb-6">💰</div>
+                <h3 class="text-2xl font-bold mb-3">開発コスト 90%削減</h3>
+                <p class="text-[#a0a0c0]">エンジニア雇用や外注が不要に。月額$25〜で本格アプリ開発が可能。</p>
+            </div>
+            
+            <div class="bg-[#1a1a2e] p-8 rounded-3xl border border-[#39ff14]/30">
+                <div class="text-5xl mb-6">⚡</div>
+                <h3 class="text-2xl font-bold mb-3">開発スピード 10倍以上</h3>
+                <p class="text-[#a0a0c0]">数ヶ月かかっていたMVPが数時間〜数日で完成。市場検証が爆速に。</p>
+            </div>
+            
+            <div class="bg-[#1a1a2e] p-8 rounded-3xl border border-[#39ff14]/30">
+                <div class="text-5xl mb-6">🧠</div>
+                <h3 class="text-2xl font-bold mb-3">AI顧問が常にサポート</h3>
+                <p class="text-[#a0a0c0]">技術だけでなく、ビジネス戦略・UX改善まで提案してくれる。</p>
+            </div>
+            
+            <div class="bg-[#1a1a2e] p-8 rounded-3xl border border-[#39ff14]/30">
+                <div class="text-5xl mb-6">🚀</div>
+                <h3 class="text-2xl font-bold mb-3">非エンジニアでも量産可能</h3>
+                <p class="text-[#a0a0c0]">経営者・企画・営業が直接アプリを作り、改善し続けられる。</p>
+            </div>
+            
+            <div class="bg-[#1a1a2e] p-8 rounded-3xl border border-[#39ff14]/30">
+                <div class="text-5xl mb-6">🔄</div>
+                <h3 class="text-2xl font-bold mb-3">継続改善が超簡単</h3>
+                <p class="text-[#a0a0c0]">「もっとこうして」とチャットするだけでAIが即対応。</p>
+            </div>
+            
+            <div class="bg-[#1a1a2e] p-8 rounded-3xl border border-[#39ff14]/30">
+                <div class="text-5xl mb-6">🏆</div>
+                <h3 class="text-2xl font-bold mb-3">実績が証明する信頼性</h3>
+                <p class="text-[#a0a0c0]">従業員ゼロで$164.4M評価額・年商$2M達成。AIだけでここまで可能。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final CTA -->
+    <div class="bg-[#11111a] border-t border-[#39ff14]/30 py-20">
+        <div class="max-w-2xl mx-auto text-center px-6">
+            <h2 class="text-5xl font-bold tracking-tight mb-6">今すぐあなたの<br>アイデアをアプリにしよう</h2>
+            <p class="text-xl text-[#a0a0c0] mb-10">無料プランから始められます。クレジットカード不要。</p>
+            
+            <a href="https://app.shipper.now" target="_blank"
+               class="neon-button inline-flex items-center justify-center gap-x-4 px-16 py-5 rounded-3xl text-2xl font-bold shadow-2xl">
+                <span>無料でアプリを作り始める</span>
+                <i class="fas fa-arrow-right"></i>
+            </a>
+            
+            <div class="mt-8 text-sm text-[#666]">
+                すでに23,000人以上のクリエイター・起業家が利用中
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-black py-12 border-t border-white/10">
+        <div class="max-w-7xl mx-auto px-6 text-center text-sm text-[#666]">
+            <div class="flex justify-center items-center gap-x-8 mb-6">
+                <a href="https://shipper.now" class="hover:text-white transition-colors">公式サイト</a>
+                <a href="https://app.shipper.now" class="hover:text-white transition-colors">アプリを試す</a>
+                <a href="https://x.com/shipper_now" target="_blank" class="hover:text-white transition-colors">X (Twitter)</a>
+            </div>
+            <div>© 2026 Shipper AI App Builder. All rights reserved.</div>
+            <div class="mt-2 text-xs">このページはShipperの魅力を伝えるために作成されました。</div>
+        </div>
+    </footer>
+
+    <script>
+        // Tailwind script
+        function initializeTailwind() {
+            document.documentElement.style.setProperty('--accent', '#39ff14');
+        }
+        
+        // Simple scroll animation
+        function addScrollAnimations() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            document.querySelectorAll('.chapter-card, .stat').forEach(el => {
+                el.style.opacity = '0.8';
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                observer.observe(el);
+            });
+        }
+        
+        window.onload = function() {
+            initializeTailwind();
+            addScrollAnimations();
+            
+            // Easter egg: Konami code for fun
+            let konami = '';
+            document.addEventListener('keydown', function(e) {
+                konami += e.key;
+                if (konami.length > 10) konami = konami.slice(-10);
+                if (konami === 'ArrowUpArrowUpArrowDownArrowDownArrowLeftArrowRightArrowLeftArrowRightba') {
+                    alert('🚀 Shipperモード発動！ あなたは真のAIビルダーです！');
+                    konami = '';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
