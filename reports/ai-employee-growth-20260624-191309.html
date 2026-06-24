@@ -1,0 +1,930 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="web-publish">
+  <meta property="og:title" content="AI社員の成長 | ZEN PLACE Engineer">
+  <meta property="og:description" content="断片的な記憶が日々増え、ある時点で結びついて知識の塊になる。AI社員(Hermes/Codex/Claude)の第二の脳の成長を3Dシナプスマップと成長曲線で可視化">
+  <meta property="og:url" content="https://zen-jp.github.io/web-publish-cdn/reports/ai-employee-growth-20260624-191309.html">
+  <meta property="og:image" content="https://raw.githubusercontent.com/zen-jp/web-publish-cdn/master/og/ai-employee-growth-20260624-191252.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="AI社員の成長 | ZEN PLACE Engineer">
+  <meta name="twitter:description" content="断片的な記憶が日々増え、ある時点で結びついて知識の塊になる。AI社員(Hermes/Codex/Claude)の第二の脳の成長を3Dシナプスマップと成長曲線で可視化">
+  <meta name="twitter:image" content="https://raw.githubusercontent.com/zen-jp/web-publish-cdn/master/og/ai-employee-growth-20260624-191252.png">
+
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI社員の成長 | ZEN PLACE Engineer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+  :root{
+    --sky:#49b8d9;          /* --bg-zen-sky */
+    --sky-dark:#0066a4;     /* --bg-zen-sky-dark */
+    --ink:#333;
+    --paper:#ffffff;
+    --mist:#edf7f9;
+    --mist2:#eff4f7;
+    --mist3:#d4eef7;
+    --hermes:#7c5cff;
+    --codex:#10a37f;
+    --claude:#d97757;
+    --grid:#e3edf2;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;color:var(--ink);background:var(--paper);
+    font-family:"Noto Sans JP","ヒラギノ角ゴ ProN W3",sans-serif;font-weight:300;
+    line-height:1.8;-webkit-font-smoothing:antialiased;
+  }
+  .container{max-width:1080px;margin:0 auto;padding:0 24px}
+  .eng{font-family:"Montserrat",sans-serif;letter-spacing:.12em}
+
+  /* section title : 和文小ラベル + 英字大ラベル */
+  .ttl{margin:0 0 36px}
+  .ttl small{display:block;color:var(--sky);font-size:14px;font-weight:700;letter-spacing:.05em;font-family:"Noto Sans JP",sans-serif}
+  .ttl span{display:block;color:var(--ink);font-size:30px;font-weight:800;font-family:"Montserrat",sans-serif;letter-spacing:.1em;margin-top:2px}
+
+  /* HERO */
+  .hero{
+    position:relative;min-height:520px;display:flex;align-items:center;justify-content:center;text-align:center;
+    background:linear-gradient(135deg,#0066a4 0%,#0a86c4 55%,#49b8d9 100%);
+    color:#fff;overflow:hidden;
+  }
+  .hero::after{content:"";position:absolute;inset:0;background:
+    radial-gradient(circle at 20% 30%,rgba(255,255,255,.18),transparent 38%),
+    radial-gradient(circle at 80% 70%,rgba(255,255,255,.14),transparent 40%);}
+  .hero .container{position:relative;z-index:2}
+  .hero .kicker{font-size:13px;letter-spacing:.32em;opacity:.92;margin-bottom:18px}
+  .hero h1{font-size:44px;font-weight:700;line-height:1.45;margin:0 0 18px}
+  .hero h1 .eng{display:block;font-size:20px;font-weight:700;opacity:.9;margin-top:14px}
+  .hero p.lead{font-size:16px;opacity:.95;max-width:640px;margin:0 auto;font-weight:400}
+  .agent-pills{display:flex;gap:10px;justify-content:center;margin-top:26px;flex-wrap:wrap}
+  .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);
+    border-radius:50px;padding:8px 18px;font-size:14px;font-weight:500;backdrop-filter:blur(4px)}
+  .pill i{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .snapshot{margin-top:30px;font-size:12px;letter-spacing:.18em;opacity:.85}
+
+  /* KPI */
+  .kpi-wrap{background:var(--mist);padding:56px 0}
+  .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+  .kpi{background:#fff;border-radius:14px;padding:24px 16px;text-align:center;box-shadow:0 6px 22px rgba(0,102,164,.07)}
+  .kpi .num{font-family:"Montserrat",sans-serif;font-weight:800;font-size:34px;color:var(--sky-dark);line-height:1.1}
+  .kpi .num small{font-size:15px;font-weight:700;margin-left:2px}
+  .kpi .label{font-size:12px;margin-top:8px;color:#5a6b75;font-weight:400}
+
+  section.block{padding:72px 0}
+  section.block.alt{background:var(--mist2)}
+  .note-inline{font-size:12px;color:#7a8a93;margin-top:6px}
+
+  /* growth chart */
+  .chart-card{background:#fff;border-radius:16px;padding:28px 24px 16px;box-shadow:0 8px 30px rgba(0,102,164,.08)}
+  .legend{display:flex;gap:20px;flex-wrap:wrap;font-size:12px;color:#5a6b75;margin-top:14px}
+  .legend i{display:inline-block;width:22px;height:0;border-top-width:3px;border-top-style:solid;vertical-align:middle;margin-right:6px}
+  .phase-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px}
+  .phase{border-radius:12px;padding:18px;background:var(--mist);border-left:4px solid var(--sky)}
+  .phase b{display:block;font-family:"Montserrat",sans-serif;color:var(--sky-dark);font-size:13px;letter-spacing:.08em;margin-bottom:4px}
+  .phase.now{background:#fff;border-left-color:var(--sky-dark);box-shadow:0 6px 22px rgba(0,102,164,.1)}
+  .phase small{font-size:11px;color:#8b99a1}
+
+  /* synapse 3D */
+  #synapse3d{width:100%;height:600px;border-radius:16px 16px 0 0;background:radial-gradient(circle at 50% 40%,#0a2540 0%,#04101d 100%);overflow:hidden;position:relative}
+  #synapse3d canvas{display:block}
+  .syn-hint{position:absolute;top:14px;left:16px;z-index:3;font-size:11px;color:#7fa6c0;letter-spacing:.04em}
+  /* timeline controls */
+  .timeline{background:#0a2540;border-radius:0 0 16px 16px;padding:18px 22px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .timeline .play{flex:0 0 auto;width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;background:var(--sky);color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center}
+  .timeline .play:hover{background:#5fc6e4}
+  .timeline .tl-main{flex:1 1 320px;min-width:240px}
+  .timeline input[type=range]{width:100%;accent-color:var(--sky)}
+  .tl-date{font-family:"Montserrat",sans-serif;font-weight:800;color:#fff;font-size:22px;letter-spacing:.06em}
+  .tl-readouts{display:flex;gap:22px;flex:0 0 auto}
+  .tl-readouts .ro{text-align:center;color:#cfe2ee}
+  .tl-readouts .ro b{display:block;font-family:"Montserrat",sans-serif;font-weight:800;font-size:24px;color:var(--sky)}
+  .tl-readouts .ro small{font-size:10px;letter-spacing:.08em;opacity:.8}
+  .syn-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:#5a6b75;margin-top:16px;align-items:center}
+  .syn-legend .dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  /* シナプスビュー埋め込み（自己完結の gv_A を iframe で隔離） */
+  .synapse-embed{position:relative;width:100%;height:min(74vh,640px);border-radius:16px;overflow:hidden;background:#07080B;border:1px solid #0d2233;box-shadow:0 16px 48px rgba(0,30,60,.20)}
+  .synapse-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+
+  /* breakdown */
+  .bd{display:flex;flex-direction:column;gap:14px;max-width:680px}
+  .bd-row{display:grid;grid-template-columns:140px 1fr 54px;align-items:center;gap:14px;font-size:14px}
+  .bd-bar{height:14px;border-radius:8px;background:var(--grid);overflow:hidden}
+  .bd-bar span{display:block;height:100%;border-radius:8px}
+  .bd-val{text-align:right;font-family:"Montserrat",sans-serif;font-weight:700;color:var(--sky-dark)}
+
+  .takeaway{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:8px}
+  .tk{background:#fff;border-radius:14px;padding:22px;box-shadow:0 6px 22px rgba(0,102,164,.07)}
+  .tk h4{margin:0 0 8px;font-size:15px;color:var(--sky-dark)}
+  .tk p{margin:0;font-size:13px;color:#566;line-height:1.7}
+
+  footer.poc{background:#0a2540;color:#cfe2ee;padding:30px 0;font-size:12px}
+  footer.poc b{color:#fff}
+  .disclaimer{background:#fff4e5;border:1px solid #ffd9a8;color:#8a5a12;border-radius:12px;padding:14px 18px;font-size:13px;margin:24px auto 0;max-width:1080px}
+
+  @media(max-width:860px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr)}
+    .phase-row,.takeaway{grid-template-columns:1fr}
+    .hero h1{font-size:32px}
+    .ttl span{font-size:24px}
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="container">
+    <div class="kicker eng">ZEN PLACE / ENGINEER</div>
+    <h1>AI社員は、毎日「育って」いる
+      <span class="eng">AI EMPLOYEE GROWTH</span>
+    </h1>
+    <p class="lead">Hermes・Codex・Claude――3体のAI社員が積み上げる「第二の脳（Obsidianメモリ）」。
+      ノート・リンク・接続密度の成長を、シナプスマップと成長曲線で可視化します。</p>
+    <div class="agent-pills">
+      <span class="pill"><i style="background:var(--hermes)"></i>Hermes</span>
+      <span class="pill"><i style="background:var(--codex)"></i>Codex</span>
+      <span class="pill"><i style="background:var(--claude)"></i>Claude</span>
+    </div>
+    <div class="snapshot eng">SNAPSHOT — 2026.06.24</div>
+  </div>
+</header>
+
+<!-- KPI -->
+<div class="kpi-wrap">
+  <div class="container">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="num">405</div><div class="label">累積ノート数</div></div>
+      <div class="kpi"><div class="num">89.4<small>万</small></div><div class="label">総文字数</div></div>
+      <div class="kpi"><div class="num">32</div><div class="label">接点チャンネル</div></div>
+      <div class="kpi"><div class="num">31.2</div><div class="label">1日平均ノート</div></div>
+      <div class="kpi"><div class="num">13</div><div class="label">稼働日数</div></div>
+    </div>
+    <p class="note-inline" style="text-align:center">※ 2026/06/12〜06/24 のAI社員の長期記憶（Obsidian）集計。3体のAI社員の合算値。</p>
+  </div>
+</div>
+
+<!-- 成長曲線 -->
+<section class="block">
+  <div class="container">
+    <div class="ttl"><small>成長曲線</small><span class="eng">GROWTH CURVE</span></div>
+    <div class="chart-card">
+      <svg id="growth" viewBox="0 0 960 420" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto"></svg>
+      <div class="legend">
+        <span><i style="border-top-color:var(--sky-dark)"></i>累積ノート数</span>
+        <span><i style="border-top-color:var(--sky);border-top-style:dashed"></i>Logistic（S字）参照曲線</span>
+        <span><i style="border-top-color:#cfe0ea;border-top-width:10px"></i>日次ノート数（棒）</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase"><b>EXPONENTIAL</b>起動直後の爆発期。6/14〜6/15に最大63ノート/日。記憶基盤を一気に立ち上げる。</div>
+      <div class="phase now"><b>STABILIZING ← 現在</b>30〜50ノート/日で継続蓄積。指数から線形へ移行中。<small>※ 実データ13日分のため飽和予測には早期</small></div>
+      <div class="phase"><b>LOGISTIC（予測）</b>関連リンクが増えるほど上限に漸近。成熟期=知識の再利用が主役に。</div>
+    </div>
+  </div>
+</section>
+
+<!-- シナプスマップ -->
+<section class="block alt">
+  <div class="container">
+    <div class="ttl"><small>シナプスマップ</small><span class="eng">SYNAPSE MAP</span></div>
+    <p style="margin:-18px 0 22px;font-size:14px;color:#566;max-width:780px">
+      Obsidian の Graph View 同様、ノード＝記憶ノート群、線＝関連（同一チャンネル・同日作業・共起キーワード）。
+      中心の大きな3ハブがAI社員本体。<b>▶ 再生またはスライダーで「2026/06/12 → 06/24」の成長を再生</b>でき、
+      その日までに生まれたシナプスだけが立ち上がります。<b>ドラッグで回転・ホイールでズーム。</b>
+    </p>
+    <div class="synapse-embed">
+      <iframe srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;ja&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;title&gt;AI EMPLOYEE GROWTH — SYNAPSE (Obsidian Neon)&lt;/title&gt;
+&lt;style&gt;
+  :root{
+    --bg-base:#0B0D12;
+    --bg-mid:#11141C;
+    --bg-outer:#07080B;
+    --txt:#E5E7EB;
+    --txt-dim:#94A3B8;
+    --agent:#5EEAD4;
+    --channel:#A78BFA;
+    --date:#7DD3FC;
+    --misc:#94A3B8;
+    --zen-deep:#0066a4;
+    --zen-light:#49b8d9;
+    --hairline:rgba(120,140,170,0.12);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;width:100%;overflow:hidden;
+    background:
+      radial-gradient(120% 120% at 50% 42%, var(--bg-mid) 0%, var(--bg-base) 42%, var(--bg-outer) 100%);
+    color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,Roboto,&quot;Helvetica Neue&quot;,Arial,&quot;Hiragino Kaku Gothic ProN&quot;,&quot;Hiragino Sans&quot;,&quot;Noto Sans JP&quot;,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{position:fixed;inset:0}
+  #graph{position:absolute;inset:0}
+  #graph canvas{display:block}
+
+  /* ---- 上部ヘッダ ---- */
+  #header{
+    position:absolute;top:0;left:0;right:0;z-index:20;
+    padding:18px 22px 30px;
+    pointer-events:none;
+    background:linear-gradient(180deg, rgba(7,8,11,0.72) 0%, rgba(7,8,11,0) 100%);
+  }
+  #header .title{
+    font-size:13px;font-weight:600;letter-spacing:0.28em;
+    color:var(--txt);
+    text-transform:uppercase;
+    display:flex;align-items:center;gap:10px;
+  }
+  #header .title .dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--zen-light);
+    box-shadow:0 0 8px var(--zen-light),0 0 16px rgba(73,184,217,0.6);
+  }
+  #header .sub{
+    margin-top:7px;font-size:11px;color:var(--txt-dim);letter-spacing:0.04em;font-weight:400;
+  }
+
+  /* ---- 凡例 ---- */
+  #legend{
+    position:absolute;top:18px;right:22px;z-index:21;
+    display:flex;flex-direction:column;gap:9px;
+    padding:13px 15px;border-radius:12px;
+    background:rgba(11,13,18,0.55);
+    border:1px solid var(--hairline);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    font-size:11px;color:var(--txt-dim);letter-spacing:0.05em;
+  }
+  #legend .row{display:flex;align-items:center;gap:9px}
+  #legend .swatch{
+    width:10px;height:10px;border-radius:50%;
+    flex:0 0 auto;
+  }
+  #legend .lbl{color:var(--txt)}
+
+  /* ---- 下部タイムライン ---- */
+  #timeline{
+    position:absolute;left:0;right:0;bottom:0;z-index:20;
+    padding:18px 24px 22px;
+    background:linear-gradient(0deg, rgba(7,8,11,0.85) 0%, rgba(7,8,11,0.55) 55%, rgba(7,8,11,0) 100%);
+  }
+  #tl-inner{
+    max-width:980px;margin:0 auto;
+    display:flex;align-items:center;gap:18px;
+    flex-wrap:wrap;
+  }
+  #playBtn{
+    appearance:none;border:none;cursor:pointer;
+    width:42px;height:42px;border-radius:50%;flex:0 0 auto;
+    background:linear-gradient(145deg, var(--zen-light), var(--zen-deep));
+    color:#021018;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 0 1px rgba(73,184,217,0.4),0 4px 18px rgba(0,102,164,0.45);
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  #playBtn:hover{transform:translateY(-1px);box-shadow:0 0 0 1px rgba(73,184,217,0.6),0 6px 22px rgba(0,102,164,0.6)}
+  #playBtn:active{transform:translateY(0)}
+  #playBtn svg{width:16px;height:16px;display:block}
+
+  #slider-wrap{flex:1 1 280px;min-width:200px;display:flex;flex-direction:column;gap:6px}
+  #range{
+    -webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:4px;
+    background:linear-gradient(90deg, var(--zen-light) 0%, var(--zen-light) var(--fill,100%), rgba(120,140,170,0.18) var(--fill,100%));
+    outline:none;cursor:pointer;
+  }
+  #range::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;
+    background:#E8FBFF;border:2px solid var(--zen-light);
+    box-shadow:0 0 10px rgba(73,184,217,0.8);cursor:pointer;
+  }
+  #range::-moz-range-thumb{
+    width:14px;height:14px;border-radius:50%;
+    background:#E8FBFF;border:2px solid var(--zen-light);
+    box-shadow:0 0 10px rgba(73,184,217,0.8);cursor:pointer;border:none;
+  }
+  #tl-meta{display:flex;justify-content:space-between;font-size:10.5px;color:var(--txt-dim);letter-spacing:0.05em}
+
+  #stats{display:flex;gap:22px;flex:0 0 auto}
+  #stats .stat{display:flex;flex-direction:column;align-items:flex-end;line-height:1.2}
+  #stats .stat .num{font-size:19px;font-weight:600;color:var(--txt);letter-spacing:0.02em;font-variant-numeric:tabular-nums}
+  #stats .stat .cap{font-size:9.5px;color:var(--txt-dim);letter-spacing:0.18em;text-transform:uppercase}
+  #dateBadge{
+    font-size:14px;font-weight:600;color:var(--zen-light);letter-spacing:0.06em;
+    font-variant-numeric:tabular-nums;flex:0 0 auto;
+    text-shadow:0 0 12px rgba(73,184,217,0.4);
+  }
+
+  /* ---- フォールバック表示 ---- */
+  #fallback{
+    position:absolute;inset:0;z-index:30;display:none;
+    align-items:center;justify-content:center;flex-direction:column;gap:14px;
+    text-align:center;padding:40px;color:var(--txt-dim);font-size:13px;line-height:1.7;
+  }
+  #fallback.show{display:flex}
+  #fallback .big{color:var(--txt);font-size:15px;letter-spacing:0.08em}
+
+  #bloomNote{
+    position:absolute;left:24px;bottom:96px;z-index:21;
+    font-size:10px;color:var(--txt-dim);opacity:0.6;letter-spacing:0.04em;
+    pointer-events:none;display:none;
+  }
+
+  @media (max-width:640px){
+    #legend{top:auto;bottom:170px;right:14px;padding:10px 12px;gap:7px}
+    #header{padding:14px 16px 26px}
+    #header .title{font-size:11px;letter-spacing:0.2em}
+    #stats{gap:16px}
+    #tl-inner{gap:12px}
+  }
+  @media (max-width:560px){
+    /* タイムラインdockが折返しで崩れないよう縦積みに固定 */
+    #tl-inner{flex-wrap:wrap;gap:10px}
+    #slider-wrap{flex:1 1 100%;order:3}
+    #playBtn{order:1;width:38px;height:38px}
+    #dateBadge{order:2;flex:1 1 auto;font-size:13px}
+    #stats{order:2;gap:18px}
+    #stats .stat .num{font-size:16px}
+    #legend{bottom:190px}
+  }
+&lt;/style&gt;
+
+&lt;!-- importmap は必ず module script より前。three を1本化、3d-force-graph は ?external=three --&gt;
+&lt;script type=&quot;importmap&quot;&gt;
+{
+  &quot;imports&quot;: {
+    &quot;three&quot;: &quot;https://esm.sh/three@0.180.0&quot;,
+    &quot;three/webgpu&quot;: &quot;https://esm.sh/three@0.180.0/webgpu&quot;,
+    &quot;three/tsl&quot;: &quot;https://esm.sh/three@0.180.0/tsl&quot;,
+    &quot;three/addons/&quot;: &quot;https://esm.sh/three@0.180.0/examples/jsm/&quot;,
+    &quot;three/examples/jsm/&quot;: &quot;https://esm.sh/three@0.180.0/examples/jsm/&quot;,
+    &quot;3d-force-graph&quot;: &quot;https://esm.sh/3d-force-graph@1.80.0?external=three&quot;
+  }
+}
+&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div id=&quot;app&quot;&gt;
+  &lt;div id=&quot;graph&quot;&gt;&lt;/div&gt;
+
+  &lt;div id=&quot;header&quot;&gt;
+    &lt;div class=&quot;title&quot;&gt;&lt;span class=&quot;dot&quot;&gt;&lt;/span&gt;AI EMPLOYEE GROWTH — SYNAPSE (Obsidian Neon)&lt;/div&gt;
+    &lt;div class=&quot;sub&quot;&gt;はじめはバラバラの「点」＝断片的な記憶。日々増え、ある時点（2026/06/19）で一気に結びついて「知識の塊」になります。▶で創発を再生（検証用モック・数値は実データの簡易表現）。&lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div id=&quot;legend&quot;&gt;
+    &lt;div class=&quot;row&quot;&gt;&lt;span class=&quot;swatch&quot; style=&quot;background:var(--agent);box-shadow:0 0 8px var(--agent)&quot;&gt;&lt;/span&gt;&lt;span class=&quot;lbl&quot;&gt;Agent（AI社員）&lt;/span&gt;&lt;/div&gt;
+    &lt;div class=&quot;row&quot;&gt;&lt;span class=&quot;swatch&quot; style=&quot;background:var(--channel);box-shadow:0 0 8px var(--channel)&quot;&gt;&lt;/span&gt;&lt;span class=&quot;lbl&quot;&gt;Channel&lt;/span&gt;&lt;/div&gt;
+    &lt;div class=&quot;row&quot;&gt;&lt;span class=&quot;swatch&quot; style=&quot;background:var(--date);box-shadow:0 0 8px var(--date)&quot;&gt;&lt;/span&gt;&lt;span class=&quot;lbl&quot;&gt;Date&lt;/span&gt;&lt;/div&gt;
+    &lt;div class=&quot;row&quot;&gt;&lt;span class=&quot;swatch&quot; style=&quot;background:var(--misc);box-shadow:0 0 8px var(--misc)&quot;&gt;&lt;/span&gt;&lt;span class=&quot;lbl&quot;&gt;Misc（成果物）&lt;/span&gt;&lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div id=&quot;bloomNote&quot;&gt;bloom unavailable — halo fallback active&lt;/div&gt;
+
+  &lt;div id=&quot;timeline&quot;&gt;
+    &lt;div id=&quot;tl-inner&quot;&gt;
+      &lt;button id=&quot;playBtn&quot; aria-label=&quot;play timeline&quot;&gt;
+        &lt;svg id=&quot;playIcon&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;currentColor&quot;&gt;&lt;path d=&quot;M8 5v14l11-7z&quot;/&gt;&lt;/svg&gt;
+      &lt;/button&gt;
+      &lt;div id=&quot;slider-wrap&quot;&gt;
+        &lt;input id=&quot;range&quot; type=&quot;range&quot; min=&quot;0&quot; max=&quot;12&quot; step=&quot;1&quot; value=&quot;12&quot;&gt;
+        &lt;div id=&quot;tl-meta&quot;&gt;&lt;span&gt;06/12&lt;/span&gt;&lt;span&gt;成長タイムライン&lt;/span&gt;&lt;span&gt;06/24&lt;/span&gt;&lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div id=&quot;dateBadge&quot;&gt;2026/06/24&lt;/div&gt;
+      &lt;div id=&quot;stats&quot;&gt;
+        &lt;div class=&quot;stat&quot;&gt;&lt;span class=&quot;num&quot; id=&quot;nodeCount&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;cap&quot;&gt;Nodes&lt;/span&gt;&lt;/div&gt;
+        &lt;div class=&quot;stat&quot;&gt;&lt;span class=&quot;num&quot; id=&quot;edgeCount&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;cap&quot;&gt;Edges&lt;/span&gt;&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div id=&quot;fallback&quot;&gt;
+    &lt;div class=&quot;big&quot;&gt;WebGL を利用できません&lt;/div&gt;
+    &lt;div&gt;このモックは WebGL 対応ブラウザ（最新の Chrome / Edge / Safari / Firefox）でオンライン環境で開いてください。&lt;br&gt;グラフ描画ライブラリは CDN から読み込みます。&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script type=&quot;module&quot;&gt;
+import ForceGraph3D from '3d-force-graph';
+import * as THREE from 'three';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+/* ============================================================
+   1. データ（指定どおり一字一句そのまま埋め込み）
+   ============================================================ */
+const DATES=[&quot;06/12&quot;,&quot;06/13&quot;,&quot;06/14&quot;,&quot;06/15&quot;,&quot;06/16&quot;,&quot;06/17&quot;,&quot;06/18&quot;,&quot;06/19&quot;,&quot;06/20&quot;,&quot;06/21&quot;,&quot;06/22&quot;,&quot;06/23&quot;,&quot;06/24&quot;];
+const nodes=[
+  {id:&quot;Hermes&quot;,type:&quot;agent&quot;,c:&quot;#7c5cff&quot;,val:48,appear:0},
+  {id:&quot;Codex&quot;, type:&quot;agent&quot;,c:&quot;#10a37f&quot;,val:30,appear:0},
+  {id:&quot;Claude&quot;,type:&quot;agent&quot;,c:&quot;#d97757&quot;,val:30,appear:0},
+  {id:&quot;CRM移行&quot;,type:&quot;ch&quot;,c:&quot;#3ec98a&quot;,val:6,appear:0},
+  {id:&quot;基幹開発&quot;,type:&quot;ch&quot;,c:&quot;#3ec98a&quot;,val:6,appear:1},
+  {id:&quot;AI活用&quot;,type:&quot;ch&quot;,c:&quot;#3ec98a&quot;,val:8,appear:2},
+  {id:&quot;運用基盤&quot;,type:&quot;ch&quot;,c:&quot;#3ec98a&quot;,val:6,appear:3},
+  {id:&quot;全社連絡&quot;,type:&quot;ch&quot;,c:&quot;#3ec98a&quot;,val:5,appear:3},
+  {id:&quot;BI分析&quot;,type:&quot;ch&quot;,c:&quot;#3ec98a&quot;,val:6,appear:4},
+  {id:&quot;オンライン強化&quot;,type:&quot;ch&quot;,c:&quot;#3ec98a&quot;,val:6,appear:5},
+  {id:&quot;データ基盤&quot;,type:&quot;ch&quot;,c:&quot;#3ec98a&quot;,val:5,appear:6},
+  {id:&quot;動画施策&quot;,type:&quot;ch&quot;,c:&quot;#3ec98a&quot;,val:5,appear:7},
+  {id:&quot;システム定例&quot;,type:&quot;ch&quot;,c:&quot;#3ec98a&quot;,val:5,appear:8},
+  {id:&quot;採用&quot;,type:&quot;ch&quot;,c:&quot;#3ec98a&quot;,val:5,appear:10},
+  {id:&quot;06/12&quot;,type:&quot;date&quot;,c:&quot;#f5c542&quot;,val:5,appear:0},
+  {id:&quot;06/14&quot;,type:&quot;date&quot;,c:&quot;#f5c542&quot;,val:6,appear:2},
+  {id:&quot;06/15&quot;,type:&quot;date&quot;,c:&quot;#f5c542&quot;,val:7,appear:3},
+  {id:&quot;06/17&quot;,type:&quot;date&quot;,c:&quot;#f5c542&quot;,val:5,appear:5},
+  {id:&quot;06/19&quot;,type:&quot;date&quot;,c:&quot;#f5c542&quot;,val:5,appear:7},
+  {id:&quot;06/21&quot;,type:&quot;date&quot;,c:&quot;#f5c542&quot;,val:5,appear:9},
+  {id:&quot;06/23&quot;,type:&quot;date&quot;,c:&quot;#f5c542&quot;,val:5,appear:11},
+  {id:&quot;06/24&quot;,type:&quot;date&quot;,c:&quot;#f5c542&quot;,val:5,appear:12},
+  {id:&quot;Sessions&quot;,type:&quot;misc&quot;,c:&quot;#ff9a52&quot;,val:9,appear:1},
+  {id:&quot;振り返り&quot;,type:&quot;misc&quot;,c:&quot;#ff9a52&quot;,val:8,appear:3},
+  {id:&quot;Daily&quot;,type:&quot;misc&quot;,c:&quot;#ff9a52&quot;,val:7,appear:12}
+];
+const appearOf={}; nodes.forEach(n=&gt;appearOf[n.id]=n.appear);
+const rawLinks=[];
+const add=(s,t,w)=&gt;rawLinks.push({source:s,target:t,w:w||1});
+add(&quot;Hermes&quot;,&quot;Codex&quot;,2);add(&quot;Hermes&quot;,&quot;Claude&quot;,2);add(&quot;Codex&quot;,&quot;Claude&quot;,1);
+[&quot;CRM移行&quot;,&quot;基幹開発&quot;,&quot;AI活用&quot;,&quot;運用基盤&quot;,&quot;全社連絡&quot;,&quot;BI分析&quot;,&quot;オンライン強化&quot;,&quot;データ基盤&quot;,&quot;動画施策&quot;,&quot;システム定例&quot;,&quot;採用&quot;].forEach((c,i)=&gt;{add(&quot;Hermes&quot;,c,i&lt;6?2:1); if(i%2===0)add(&quot;Codex&quot;,c,1); if(i%3===0)add(&quot;Claude&quot;,c,1);});
+[&quot;06/12&quot;,&quot;06/14&quot;,&quot;06/15&quot;,&quot;06/17&quot;,&quot;06/19&quot;,&quot;06/21&quot;,&quot;06/23&quot;,&quot;06/24&quot;].forEach(d=&gt;add(&quot;Hermes&quot;,d,2));
+[&quot;Sessions&quot;,&quot;振り返り&quot;,&quot;Daily&quot;].forEach(m=&gt;{add(&quot;Hermes&quot;,m,2);add(&quot;Codex&quot;,m,1);});
+[[&quot;AI活用&quot;,&quot;06/15&quot;],[&quot;BI分析&quot;,&quot;06/17&quot;],[&quot;基幹開発&quot;,&quot;06/14&quot;],[&quot;オンライン強化&quot;,&quot;06/19&quot;],[&quot;CRM移行&quot;,&quot;06/12&quot;],[&quot;データ基盤&quot;,&quot;06/21&quot;],[&quot;採用&quot;,&quot;06/24&quot;],[&quot;システム定例&quot;,&quot;06/23&quot;],[&quot;動画施策&quot;,&quot;06/19&quot;],[&quot;運用基盤&quot;,&quot;06/15&quot;],[&quot;全社連絡&quot;,&quot;06/17&quot;],[&quot;Sessions&quot;,&quot;06/14&quot;],[&quot;Daily&quot;,&quot;06/24&quot;],[&quot;振り返り&quot;,&quot;06/15&quot;],[&quot;AI活用&quot;,&quot;06/24&quot;],[&quot;BI分析&quot;,&quot;06/21&quot;],[&quot;Claude&quot;,&quot;06/15&quot;],[&quot;Codex&quot;,&quot;06/14&quot;]].forEach(([a,b])=&gt;add(a,b,1));
+rawLinks.forEach(l=&gt;l.appear=Math.max(appearOf[l.source],appearOf[l.target]));
+
+/* ============================================================
+   2. Obsidian Neon パレット（type→色を美学に合わせて再マップ）
+      ※ データの c は保持しつつ、描画は type ベースの上品な配色に統一
+   ============================================================ */
+const PALETTE={
+  agent:'#5EEAD4',   // シアン
+  ch:'#A78BFA',      // パープル
+  date:'#7DD3FC',    // 淡いブルー
+  misc:'#94A3B8'     // スレートグレー
+};
+const colorOf = n =&gt; PALETTE[n.type] || '#94A3B8';
+const isHub = n =&gt; n.type==='agent';
+// パーティクル色（行き先ノードの type で着色 → どの種別へ成長したかが流れで読める）
+const PARTICLE={
+  agent:'rgba(94,234,212,0.9)',
+  ch:'rgba(167,139,250,0.9)',
+  date:'rgba(125,211,252,0.9)',
+  misc:'rgba(148,163,184,0.85)'
+};
+const typeOf={}; nodes.forEach(n=&gt;typeOf[n.id]=n.type);
+
+/* ============================================================
+   3. WebGL 検出（ダメなら静的フォールバック）
+   ============================================================ */
+const testCanvas=document.createElement('canvas');
+const webglOK=!!(testCanvas.getContext('webgl2')||testCanvas.getContext('webgl'));
+const elGraph=document.getElementById('graph');
+if(!webglOK){
+  document.getElementById('fallback').classList.add('show');
+}
+
+/* ============================================================
+   4. ハロー texture キャッシュ（色ごと再利用・リーク防止）
+   ============================================================ */
+const texCache={};
+function radialGlowTexture(color){
+  if(texCache[color]) return texCache[color];
+  const c=document.createElement('canvas'); c.width=c.height=128;
+  const ctx=c.getContext('2d');
+  const g=ctx.createRadialGradient(64,64,0,64,64,64);
+  g.addColorStop(0,color);
+  g.addColorStop(0.28,color);
+  g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,128,128);
+  const t=new THREE.CanvasTexture(c);
+  texCache[color]=t;
+  return t;
+}
+
+let Graph=null;
+let bloomActive=false;
+
+if(webglOK){
+  try{
+    Graph = new ForceGraph3D(elGraph)
+      .backgroundColor('#07080B')
+      .showNavInfo(false)
+      .nodeRelSize(4)
+      .nodeOpacity(0.92)
+      .nodeResolution(16)
+      .nodeVal(n=&gt;n.val)
+      .nodeColor(n=&gt;colorOf(n))
+      .nodeLabel(n=&gt;{
+        const typeLbl={agent:'Agent',ch:'Channel',date:'Date',misc:'Misc'}[n.type]||n.type;
+        return `&lt;div style=&quot;
+          font:12px -apple-system,'Noto Sans JP',sans-serif;
+          letter-spacing:0.05em;color:#E5E7EB;
+          background:rgba(7,8,11,0.85);border:1px solid rgba(120,140,170,0.25);
+          padding:5px 9px;border-radius:7px;
+          text-shadow:0 1px 2px rgba(0,0,0,0.6);
+          &quot;&gt;${n.id}&lt;span style=&quot;color:#94A3B8;font-size:10px;margin-left:7px;text-transform:uppercase;letter-spacing:0.1em&quot;&gt;${typeLbl}&lt;/span&gt;&lt;/div&gt;`;
+      })
+      .linkColor(()=&gt; 'rgba(58,65,80,0.55)')
+      .linkOpacity(0.32)
+      .linkWidth(l=&gt; 0.5 + (l.w||1)*0.18)
+      .linkDirectionalParticles(l=&gt; (l.w||1)&gt;=2 ? 2 : 1)
+      .linkDirectionalParticleSpeed(0.005)
+      .linkDirectionalParticleWidth(1.1)
+      .linkDirectionalParticleColor(l=&gt;{
+        const tid=(l.target&amp;&amp;l.target.id)||l.target;
+        return PARTICLE[typeOf[tid]] || 'rgba(94,234,212,0.75)';
+      })
+      // additive halo + agent ハブには常時ラベルスプライト
+      .nodeThreeObjectExtend(true)
+      .nodeThreeObject(node=&gt;{
+        const col=colorOf(node);
+        const group=new THREE.Group();
+
+        // 放射状グロー（Sprite, additive）
+        const spr=new THREE.Sprite(new THREE.SpriteMaterial({
+          map:radialGlowTexture(col),
+          blending:THREE.AdditiveBlending,
+          depthWrite:false,
+          transparent:true,
+          opacity: isHub(node)?0.62:0.42
+        }));
+        const haloR = (isHub(node)?26:13) + Math.sqrt(node.val)*1.4;
+        spr.scale.set(haloR,haloR,1);
+        spr.userData.baseScale = haloR;      // 呼吸: 生成時に即記録（onEngineStop待ちのデッドコードを解消）
+        spr.userData.isHub = isHub(node);    // ハブは呼吸を強める
+        group.add(spr);
+
+        // agent ハブは常時ラベル
+        if(isHub(node)){
+          const lbl=makeTextSprite(node.id, col);
+          if(lbl){ lbl.position.set(0, (isHub(node)?14:9), 0); group.add(lbl); }
+        }
+        return group;
+      });
+
+    // fog（背景と同色で遠景を溶かす）
+    Graph.scene().fog = new THREE.FogExp2('#07080B', 0.0016);
+
+    // ライト：中心に向けた点光源で +明度コア感を補強
+    const scene=Graph.scene();
+    scene.add(new THREE.AmbientLight(0xbfd4ff, 1.1));
+    const pt=new THREE.PointLight(0x9fe9ff, 1.4, 600);
+    pt.position.set(0,80,120); scene.add(pt);
+
+    // 力学：ハブを主役にやや広げる
+    Graph.d3Force('charge').strength(-150);
+    if(Graph.d3Force('link')) Graph.d3Force('link').distance(l=&gt; 38 + (3-(l.w||1))*8 );
+
+    // webglcontextlost 自動復帰の保険
+    try{
+      Graph.renderer().domElement.addEventListener('webglcontextlost', e=&gt;e.preventDefault(), false);
+    }catch(_){}
+
+    // --- bloom（必ず try/catch。失敗してもグラフ本体は動く）---
+    try{
+      const bloom = new UnrealBloomPass(
+        new THREE.Vector2(elGraph.clientWidth, elGraph.clientHeight),
+        1.5,   // strength（控えめ〜中。Obsidian Neon は弱中）
+        0.85,  // radius
+        0.02   // threshold（ほぼ全ノードが灯る）
+      );
+      Graph.postProcessingComposer().addPass(bloom);
+      bloomActive=true;
+    }catch(e){
+      console.warn('bloom unavailable, continuing without it:', e);
+      document.getElementById('bloomNote').style.display='block';
+    }
+
+    // --- アニメーション統合ループ（呼吸 + 自動回転を1本化）。prefers-reduced-motion を尊重 ---
+    // onEngineTick はレイアウト凍結後に止まるため、呼吸は専用の rAF ループで常時動かす。
+    const reduceMotion = !!(window.matchMedia &amp;&amp; window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    let autoRotate = !reduceMotion;
+    const t0 = performance.now();
+    function animate(){
+      if(Graph){
+        if(!reduceMotion){
+          const t=(performance.now()-t0)/1000;
+          scene.traverse(o=&gt;{
+            if(o.isSprite &amp;&amp; o.userData &amp;&amp; o.userData.baseScale){
+              const amp  = o.userData.isHub ? 0.16 : 0.06;   // ハブ(AI社員)は脈動を強く
+              const rate = o.userData.isHub ? 2.0  : 2.8;
+              const k = 1 + Math.sin(t/rate*Math.PI*2)*amp;
+              const b = o.userData.baseScale;
+              o.scale.set(b*k, b*k, 1);
+            }
+          });
+        }
+        if(autoRotate){
+          const cam=Graph.camera();
+          const d=Math.hypot(cam.position.x, cam.position.z);
+          const a=Math.atan2(cam.position.z, cam.position.x)+0.0009;
+          cam.position.x=Math.cos(a)*d;
+          cam.position.z=Math.sin(a)*d;
+          cam.lookAt(0,0,0);
+        }
+        // 既存ノードの現在座標をキャッシュ（次stepで塊として位置維持。新規だけ飛来させるため）
+        try{
+          const gd=Graph.graphData &amp;&amp; Graph.graphData();
+          if(gd&amp;&amp;gd.nodes){for(const o of gd.nodes){ if(o&amp;&amp;o.id!=null&amp;&amp;typeof o.x==='number'){ posCache[o.id]={x:o.x,y:o.y,z:o.z}; } }}
+        }catch(_){}
+      }
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+    // ユーザー操作中は自動回転を止める
+    elGraph.addEventListener('pointerdown',()=&gt;{autoRotate=false;});
+
+    // レスポンシブ
+    function resize(){
+      if(!Graph) return;
+      Graph.width(elGraph.clientWidth).height(elGraph.clientHeight);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+  }catch(err){
+    console.error('graph init failed:', err);
+    document.getElementById('fallback').classList.add('show');
+    Graph=null;
+  }
+}
+
+/* ============================================================
+   5. テキストスプライト（agent 常時ラベル）— 同一 THREE 使用
+   ============================================================ */
+function makeTextSprite(text, color){
+  try{
+    const pad=8, fs=44;
+    const c=document.createElement('canvas');
+    const ctx=c.getContext('2d');
+    ctx.font=`600 ${fs}px -apple-system,'Noto Sans JP',sans-serif`;
+    const w=Math.ceil(ctx.measureText(text).width)+pad*2;
+    const h=fs+pad*2;
+    c.width=w; c.height=h;
+    const cx=c.getContext('2d');
+    cx.font=`600 ${fs}px -apple-system,'Noto Sans JP',sans-serif`;
+    cx.textBaseline='middle';
+    // 暗ハロー
+    cx.shadowColor='rgba(0,0,0,0.6)'; cx.shadowBlur=6;
+    cx.fillStyle='#E5E7EB';
+    cx.fillText(text, pad, h/2);
+    const tex=new THREE.CanvasTexture(c);
+    tex.minFilter=THREE.LinearFilter;
+    const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true, depthWrite:false, opacity:0.95}));
+    const scale=0.16;
+    spr.scale.set(w*scale, h*scale, 1);
+    return spr;
+  }catch(_){ return null; }
+}
+
+/* ============================================================
+   6. タイムライン render（appear&lt;=day のみ表示）
+   ============================================================ */
+const elNode=document.getElementById('nodeCount');
+const elEdge=document.getElementById('edgeCount');
+const elBadge=document.getElementById('dateBadge');
+const elRange=document.getElementById('range');
+
+/* 「結合していく様」を出すための状態:
+   - posCache: 既存ノードの現在座標を保持し、step間でレイアウトを維持（=塊が育つ）
+   - 新規ノード（その日に出現した断片）だけ周縁から飛来させ、力学で既存の塊へ結合させる
+   - 新規があった step では再加熱＋パーティクルを走らせて「結びつき」を強調         */
+const BIND_DAY=7;            // この日(2026/06/19)に点が一気に結びついて「塊」になる相転移ポイント（調整可）
+const posCache={};
+let prevIds=new Set();
+let prevDay=-1;
+let bindTO=null;
+function bindPulse(strong){
+  if(!Graph) return;
+  try{ Graph.linkDirectionalParticleSpeed(strong?0.035:0.02); }catch(_){}
+  if(bindTO) clearTimeout(bindTO);
+  bindTO=setTimeout(()=&gt;{ try{ Graph.linkDirectionalParticleSpeed(0.005); }catch(_){} }, strong?2200:1200);
+}
+
+function render(day){
+  const ns=nodes.filter(n=&gt;n.appear&lt;=day);
+  const ids=new Set(ns.map(n=&gt;n.id));
+  // BIND_DAY 未満は「点」だけでリンク無し。BIND_DAY 以降に点同士が結びつき塊化する
+  const bound = day &gt;= BIND_DAY;
+  const ls = bound ? rawLinks.filter(l=&gt;l.appear&lt;=day
+      &amp;&amp; ids.has(l.source.id||l.source)
+      &amp;&amp; ids.has(l.target.id||l.target)) : [];
+
+  // 新規ノード数（前stepとの差分）= この日に増えた点
+  let joined=0;
+  ns.forEach(n=&gt;{ if(!prevIds.has(n.id)) joined++; });
+  // 「点 → 塊」の結晶化の瞬間（散在フェーズから結合フェーズへ）
+  const crystallize = (prevDay &lt; BIND_DAY) &amp;&amp; bound;
+
+  // graphData 汚染回避：毎回 id ベースの生コピー。既存は現在位置を維持し、新規は周縁から飛来
+  const nodesCopy = ns.map(n=&gt;{
+    const c={...n};
+    const p=posCache[n.id];
+    if(p){ c.x=p.x; c.y=p.y; c.z=p.z; }   // 既存=塊の一部として位置維持
+    else {                                 // 新規=バラバラな断片。遠方から飛び込んで結合
+      const r=130+Math.random()*80, u=Math.random(), v=Math.random();
+      const th=Math.acos(2*u-1), ph=2*Math.PI*v;
+      c.x=r*Math.sin(th)*Math.cos(ph);
+      c.y=r*Math.sin(th)*Math.sin(ph);
+      c.z=r*Math.cos(th);
+    }
+    return c;
+  });
+  const linksCopy = ls.map(l=&gt;({
+    source:(l.source.id||l.source),
+    target:(l.target.id||l.target),
+    w:l.w, appear:l.appear
+  }));
+
+  if(Graph){
+    // graphData 更新で 3d-force-graph が自動的に力学を再加熱（=塊が再編・凝集）。
+    Graph.graphData({nodes:nodesCopy, links:linksCopy});
+    if(crystallize) bindPulse(true);       // 結晶化: 強いパルスで一斉結合を演出
+    else if(joined&gt;0) bindPulse(false);    // 通常stepの結合パーティクル
+  }
+  prevIds=ids;
+  prevDay=day;
+
+  // カウンタ・日付
+  elNode.textContent=nodesCopy.length;
+  elEdge.textContent=linksCopy.length;
+  elBadge.textContent='2026/'+DATES[day];
+
+  // スライダー fill
+  const pct=(day/12)*100;
+  elRange.style.setProperty('--fill', pct+'%');
+}
+
+/* ============================================================
+   7. タイムライン UI（スライダー + 再生）
+   ============================================================ */
+elRange.addEventListener('input', e=&gt;{
+  stopPlay();
+  render(+e.target.value);
+});
+
+const playBtn=document.getElementById('playBtn');
+const playIcon=document.getElementById('playIcon');
+let playTimer=null;
+const PLAY_ICON='&lt;path d=&quot;M8 5v14l11-7z&quot;/&gt;';
+const PAUSE_ICON='&lt;path d=&quot;M6 5h4v14H6zM14 5h4v14h-4z&quot;/&gt;';
+
+function setPlayingUI(playing){
+  playIcon.innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
+}
+function stopPlay(){
+  if(playTimer){ clearInterval(playTimer); playTimer=null; setPlayingUI(false); }
+}
+function startPlay(){
+  let day=(+elRange.value&gt;=12)?0:(+elRange.value);
+  elRange.value=day; render(day); setPlayingUI(true);
+  playTimer=setInterval(()=&gt;{
+    day++;
+    if(day&gt;12){ stopPlay(); return; }
+    elRange.value=day;
+    render(day);
+  },1100);
+}
+playBtn.addEventListener('click',()=&gt;{
+  if(playTimer) stopPlay();
+  else startPlay();
+});
+
+/* ============================================================
+   8. 初期表示：フルグラフ（day=12）
+   ============================================================ */
+// 初期表示：いきなり塊を見せず「点だけ(day0)」から自動再生し、点→増加→結合→塊 を見せる
+elRange.value=0;
+render(0);
+window.__graphBooted = !!Graph;
+if(Graph){
+  // 散在フェーズも塊も収まる距離にカメラ固定（自動reframeの飛びを避ける）
+  setTimeout(()=&gt;{ try{ Graph.cameraPosition({x:0,y:0,z:430}); }catch(_){} }, 200);
+  // モジュール初期化後に自動再生（創発を最初に見せる）
+  setTimeout(()=&gt;{ try{ startPlay(); }catch(_){} }, 1300);
+}
+&lt;/script&gt;
+
+&lt;!-- ウォッチドッグ（classic script）: ESモジュールの import 解決失敗は module 全体を殺し
+     module 内 try/catch が発火しないため、別系統でcanvas未生成を監視してフォールバックを出す --&gt;
+&lt;script&gt;
+(function(){
+  setTimeout(function(){
+    var g=document.getElementById('graph');
+    var hasCanvas = g &amp;&amp; g.querySelector('canvas');
+    var fb=document.getElementById('fallback');
+    if(!hasCanvas &amp;&amp; fb &amp;&amp; !fb.classList.contains('show')){
+      var big=fb.querySelector('.big'); if(big) big.textContent='グラフを読み込めませんでした';
+      fb.classList.add('show');
+    }
+  }, 6000);
+})();
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+" title="AI社員シナプスマップ（3D・Obsidian Neon）" loading="lazy"></iframe>
+    </div>
+    <p class="note-inline">操作: ドラッグで回転／ホイールでズーム／▶で 06/12→06/24 の成長を再生。凡例・NODES/EDGESカウンタはビュー内に表示されます。3D描画にはネット接続が必要です（CDN読込）。</p>
+  </div>
+</section>
+
+<!-- 内訳 -->
+<section class="block">
+  <div class="container">
+    <div class="ttl"><small>記憶の内訳</small><span class="eng">MEMORY SOURCES</span></div>
+    <div class="bd" id="breakdown"></div>
+    <p class="note-inline">合計405ノート。記憶の65%はSlackでの対話から生まれ、残りは開発セッション・日次記録に由来。</p>
+  </div>
+</section>
+
+<!-- takeaway -->
+<section class="block alt">
+  <div class="container">
+    <div class="ttl"><small>この可視化が示すもの</small><span class="eng">WHY IT MATTERS</span></div>
+    <div class="takeaway">
+      <div class="tk"><h4>AIは“使い捨て”ではない</h4><p>会話ごとにリセットされず、記憶が累積・構造化される。日々賢くなるAI社員という前提に立った開発体制を取っています。</p></div>
+      <div class="tk"><h4>成長が定量で見える</h4><p>ノート数・接続密度・チャンネル接点を指標化。「育っているか」を感覚ではなくデータで把握できます。</p></div>
+      <div class="tk"><h4>人とAIの協働の記録</h4><p>32チャンネル・3体への放射構造は、人の依頼とAIの応答が織りなす組織的な知のネットワークそのものです。</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="disclaimer">
+  ⚠️ <b>POCモック</b>：これは検証用プロトタイプです。数値は Hermes が Slack で集計した6/24時点の実スナップショットを埋め込んでおり、自動更新はされません（日次自動更新は次フェーズで設計）。日次内訳の細部は合計と整合する形で補完しています。
+</div>
+
+<footer class="poc">
+  <div class="container">
+    <b>AI EMPLOYEE GROWTH — POC mock</b> ／ data source: AI社員の長期記憶（Obsidian） ／ snapshot 2026-06-24<br>
+    本ページは公開採用ページ（corporate.zenplace.co.jp/engineer）への掲載を想定した検証モックです。掲載はメタ数値のみとし、ノート本文・社内固有名は出しません。
+  </div>
+</footer>
+
+<script>
+/* ---------- 成長曲線 ---------- */
+(function(){
+  const dates=["6/12","6/13","6/14","6/15","6/16","6/17","6/18","6/19","6/20","6/21","6/22","6/23","6/24"];
+  const daily=[8,15,48,63,42,38,35,31,28,22,33,24,18];
+  const cum=daily.reduce((a,v)=>{a.push((a.length?a[a.length-1]:0)+v);return a;},[]);
+  const W=960,H=420,m={t:24,r:24,b:46,l:54};
+  const iw=W-m.l-m.r, ih=H-m.t-m.b;
+  const maxCum=420;
+  const x=i=>m.l+ (iw*i/(dates.length-1));
+  const y=v=>m.t+ ih*(1-v/maxCum);
+  const svg=d3.select("#growth");
+  // grid + y axis
+  const yt=[0,100,200,300,400];
+  yt.forEach(t=>{
+    svg.append("line").attr("x1",m.l).attr("x2",W-m.r).attr("y1",y(t)).attr("y2",y(t)).attr("stroke","#e3edf2");
+    svg.append("text").attr("x",m.l-10).attr("y",y(t)+4).attr("text-anchor","end").attr("font-size","11").attr("fill","#8b99a1").text(t);
+  });
+  // daily bars
+  const bw=iw/dates.length*0.5;
+  daily.forEach((v,i)=>{
+    const bh=ih*(v/70);
+    svg.append("rect").attr("x",x(i)-bw/2).attr("y",m.t+ih-bh).attr("width",bw).attr("height",bh)
+      .attr("rx",3).attr("fill","#cfe0ea");
+  });
+  // logistic reference (L/(1+e^-k(t-t0)))
+  const L=440,k=0.55,t0=4;
+  const logi=dates.map((_,i)=>L/(1+Math.exp(-k*(i-t0))));
+  const lineGen=d3.line().x((_,i)=>x(i)).y(v=>y(v)).curve(d3.curveMonotoneX);
+  svg.append("path").attr("d",lineGen(logi)).attr("fill","none").attr("stroke","#49b8d9").attr("stroke-width",2.5).attr("stroke-dasharray","7 5").attr("opacity",.85);
+  // cumulative line
+  svg.append("path").attr("d",lineGen(cum)).attr("fill","none").attr("stroke","#0066a4").attr("stroke-width",3.5);
+  cum.forEach((v,i)=>{svg.append("circle").attr("cx",x(i)).attr("cy",y(v)).attr("r",3.5).attr("fill","#0066a4");});
+  // x labels
+  dates.forEach((d,i)=>{svg.append("text").attr("x",x(i)).attr("y",H-22).attr("text-anchor","middle").attr("font-size","10").attr("fill","#8b99a1").text(d);});
+  // peak annotation
+  const pi=3;
+  svg.append("text").attr("x",x(pi)).attr("y",y(cum[pi])-14).attr("text-anchor","middle").attr("font-size","11").attr("font-weight","700").attr("fill","#0066a4").text("▲ 爆発期ピーク 63/日");
+})();
+
+/* ---------- 内訳バー ---------- */
+(function(){
+  const rows=[
+    {label:"Slack記憶",v:265,c:"#0066a4"},
+    {label:"Claude session",v:64,c:"#d97757"},
+    {label:"Codex session",v:52,c:"#10a37f"},
+    {label:"日次記録",v:11,c:"#49b8d9"},
+  ];
+  const max=Math.max(...rows.map(r=>r.v));
+  const root=document.getElementById("breakdown");
+  rows.forEach(r=>{
+    const el=document.createElement("div");el.className="bd-row";
+    el.innerHTML=`<div>${r.label}</div><div class="bd-bar"><span style="width:${r.v/max*100}%;background:${r.c}"></span></div><div class="bd-val">${r.v}</div>`;
+    root.appendChild(el);
+  });
+})();
+</script>
+</body>
+</html>
