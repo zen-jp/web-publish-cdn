@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="web-publish">
+  <meta property="og:title" content="awesome-design-md 検証 · Before / After">
+  <meta property="og:url" content="https://zen-jp.github.io/web-publish-cdn/reports/proto-design-md-ab-compare-20260709-041339.html">
+  <meta property="og:image" content="https://raw.githubusercontent.com/zen-jp/web-publish-cdn/master/og/proto-design-md-ab-compare-20260709-041319.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="awesome-design-md 検証 · Before / After">
+  <meta name="twitter:image" content="https://raw.githubusercontent.com/zen-jp/web-publish-cdn/master/og/proto-design-md-ab-compare-20260709-041319.png">
+
+  <meta name="robots" content="noindex, nofollow">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>awesome-design-md 検証 · Before / After</title>
+<style>
+  :root {
+    --bg: #0c0d10; --panel: #14151a; --line: #2a2d36;
+    --text: #eef0f4; --muted: #9aa0ad; --before: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  header { border-bottom: 1px solid var(--line); padding: 28px 24px 22px; max-width: 1440px; margin: 0 auto; }
+  .kicker { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  h1 { font-size: clamp(22px, 3vw, 30px); font-weight: 600; letter-spacing: -0.03em; margin-bottom: 10px; }
+  .lead { color: var(--muted); max-width: 860px; font-size: 15px; }
+  .lead a { color: #a5b0ff; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .chip { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); background: var(--panel); }
+  .chip strong { color: var(--text); font-weight: 600; }
+  .toolbar {
+    max-width: 1440px; margin: 0 auto; padding: 16px 24px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 30;
+    background: rgba(12,13,16,.92); backdrop-filter: blur(10px);
+  }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button { appearance: none; border: 0; background: transparent; color: var(--muted); padding: 8px 14px; font-size: 13px; font-weight: 500; cursor: pointer; }
+  .seg button.active { background: var(--panel); color: var(--text); }
+  .stage { max-width: 1440px; margin: 0 auto; padding: 16px 16px 32px; }
+  .frames { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .frames.single { grid-template-columns: 1fr; }
+  @media (max-width: 900px) { .frames { grid-template-columns: 1fr; } }
+  .frame-wrap { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #000; min-height: 72vh; }
+  .frame-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--panel); border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 600; }
+  .tag-before { color: var(--before); }
+  .tag-after { color: #a5b0ff; }
+  .muted { color: var(--muted); }
+  iframe { flex: 1; width: 100%; border: 0; background: #000; min-height: 70vh; }
+  .findings { max-width: 1440px; margin: 0 auto 48px; padding: 0 24px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .findings { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; }
+  .card h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+  .card ul { padding-left: 18px; color: var(--muted); font-size: 14px; }
+  .card li { margin: 6px 0; }
+  .card li strong { color: var(--text); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  .verdict { margin-top: 14px; padding: 12px 14px; border-radius: 8px; background: rgba(94,106,210,.12); border: 1px solid rgba(94,106,210,.35); font-size: 14px; }
+  .verdict strong { color: #c4caff; }
+  footer { max-width: 1440px; margin: 0 auto 40px; padding: 0 24px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="kicker">Experiment · VoltAgent/awesome-design-md</div>
+    <h1>DESIGN.md あり / なし — 同一プロンプトの Before / After</h1>
+    <p class="lead">
+      架空プロダクト <strong>Northstar</strong>（issue tracker LP）を、同じコピー・同じ機能説明で 2 通り生成した。
+      Control は DESIGN.md なし（よくある AI デフォルト SaaS 見た目）、Treatment は
+      <a href="https://github.com/VoltAgent/awesome-design-md/blob/main/design-md/linear.app/DESIGN.md" target="_blank" rel="noopener">linear.app/DESIGN.md</a>
+      のトークンと Do's/Don'ts を厳守。
+      元: <a href="https://github.com/VoltAgent/awesome-design-md" target="_blank" rel="noopener">VoltAgent/awesome-design-md</a>
+    </p>
+    <div class="meta">
+      <span class="chip"><strong>対象</strong> Linear-inspired DESIGN.md</span>
+      <span class="chip"><strong>変数</strong> DESIGN.md の有無のみ</span>
+      <span class="chip"><strong>固定</strong> 見出し / 本文 / 機能 6 点 / 数値 3 点</span>
+      <span class="chip"><strong>目的</strong> 見た目の一貫性・「らしさ」の差を体感</span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="seg" role="tablist">
+      <button type="button" class="active" data-view="split">Split</button>
+      <button type="button" data-view="before">Before only</button>
+      <button type="button" data-view="after">After only</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="frames" id="frames">
+      <div class="frame-wrap" id="wrap-before">
+        <div class="frame-bar">
+          <span class="tag-before">BEFORE · DESIGN.md なし</span>
+          <span class="muted">gradient / pill / multi-accent</span>
+        </div>
+        <iframe title="Before" srcdoc="&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;ja&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;UTF-8&quot; /&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot; /&gt;
+&lt;title&gt;Northstar — Ship faster (Before: no DESIGN.md)&lt;/title&gt;
+&lt;link rel=&quot;preconnect&quot; href=&quot;https://fonts.googleapis.com&quot; /&gt;
+&lt;link rel=&quot;preconnect&quot; href=&quot;https://fonts.gstatic.com&quot; crossorigin /&gt;
+&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap&quot; rel=&quot;stylesheet&quot; /&gt;
+&lt;style&gt;
+  /* Intentional &quot;AI default SaaS&quot; look — gradients, glass, pill CTAs, multi-accent */
+  :root {
+    --bg: #0b1020;
+    --card: rgba(255,255,255,0.06);
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --purple: #8b5cf6;
+    --pink: #ec4899;
+    --cyan: #22d3ee;
+    --green: #34d399;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Inter, system-ui, sans-serif;
+    background: radial-gradient(1200px 600px at 20% -10%, rgba(139,92,246,.35), transparent 60%),
+                radial-gradient(900px 500px at 90% 10%, rgba(236,72,153,.25), transparent 55%),
+                linear-gradient(180deg, #0b1020 0%, #111827 100%);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+  a { color: inherit; text-decoration: none; }
+  .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  /* Nav */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 0; position: sticky; top: 0; z-index: 10;
+    backdrop-filter: blur(16px);
+    background: rgba(11,16,32,.6);
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .logo {
+    font-weight: 800; font-size: 20px;
+    background: linear-gradient(90deg, var(--purple), var(--pink), var(--cyan));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .nav-links { display: flex; gap: 28px; color: var(--muted); font-size: 14px; font-weight: 500; }
+  .nav-cta {
+    background: linear-gradient(90deg, var(--purple), var(--pink));
+    color: white; padding: 10px 20px; border-radius: 999px; font-weight: 600; font-size: 14px;
+    box-shadow: 0 8px 24px rgba(139,92,246,.4);
+  }
+
+  /* Hero */
+  .hero { text-align: center; padding: 96px 0 72px; }
+  .badge {
+    display: inline-flex; gap: 8px; align-items: center;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 999px; padding: 6px 14px; font-size: 13px; color: var(--muted); margin-bottom: 28px;
+  }
+  .badge span { color: var(--green); font-weight: 600; }
+  h1 {
+    font-size: clamp(40px, 6vw, 64px); font-weight: 800; letter-spacing: -0.03em;
+    line-height: 1.1; margin-bottom: 20px;
+  }
+  h1 .grad {
+    background: linear-gradient(90deg, #a78bfa, #f472b6, #22d3ee);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p { font-size: 18px; color: var(--muted); max-width: 560px; margin: 0 auto 32px; }
+  .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary {
+    background: linear-gradient(90deg, var(--purple), var(--pink));
+    color: white; padding: 14px 28px; border-radius: 999px; font-weight: 700; font-size: 15px;
+    box-shadow: 0 12px 32px rgba(139,92,246,.45);
+  }
+  .btn-ghost {
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+    color: white; padding: 14px 28px; border-radius: 999px; font-weight: 600; font-size: 15px;
+  }
+
+  /* Logos */
+  .logos {
+    display: flex; flex-wrap: wrap; gap: 32px; justify-content: center;
+    padding: 24px 0 64px; color: #64748b; font-size: 13px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; opacity: .7;
+  }
+
+  /* Features */
+  .section { padding: 48px 0 80px; }
+  .section-title { text-align: center; margin-bottom: 48px; }
+  .section-title h2 { font-size: 36px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 12px; }
+  .section-title p { color: var(--muted); max-width: 480px; margin: 0 auto; }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+  }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .nav-links { display: none; } }
+
+  .card {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 20px;
+    padding: 28px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 20px 40px rgba(0,0,0,.25);
+    transition: transform .2s, border-color .2s;
+  }
+  .card:hover { transform: translateY(-4px); border-color: rgba(139,92,246,.5); }
+  .icon {
+    width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center;
+    font-size: 22px; margin-bottom: 18px;
+  }
+  .icon.p { background: linear-gradient(135deg, rgba(139,92,246,.3), rgba(236,72,153,.3)); }
+  .icon.c { background: linear-gradient(135deg, rgba(34,211,238,.3), rgba(52,211,153,.3)); }
+  .icon.g { background: linear-gradient(135deg, rgba(52,211,153,.3), rgba(139,92,246,.3)); }
+  .card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .card p { color: var(--muted); font-size: 14px; }
+
+  /* Stats */
+  .stats {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    background: linear-gradient(135deg, rgba(139,92,246,.15), rgba(236,72,153,.12));
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 24px; padding: 40px; margin: 24px 0 64px;
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: 1fr; } }
+  .stat { text-align: center; }
+  .stat strong {
+    display: block; font-size: 40px; font-weight: 800;
+    background: linear-gradient(90deg, #a78bfa, #22d3ee);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .stat span { color: var(--muted); font-size: 14px; }
+
+  /* CTA */
+  .cta {
+    text-align: center;
+    background: linear-gradient(135deg, #7c3aed, #db2777, #0891b2);
+    border-radius: 28px; padding: 64px 32px; margin-bottom: 64px;
+    box-shadow: 0 24px 60px rgba(124,58,237,.4);
+  }
+  .cta h2 { font-size: 36px; font-weight: 800; margin-bottom: 12px; }
+  .cta p { opacity: .9; margin-bottom: 28px; }
+  .cta .btn-primary {
+    background: white; color: #7c3aed; box-shadow: none;
+  }
+
+  footer {
+    border-top: 1px solid rgba(255,255,255,.08);
+    padding: 32px 0 48px; color: var(--muted); font-size: 13px;
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+
+  .exp-tag {
+    position: fixed; bottom: 16px; left: 16px; z-index: 100;
+    background: #f59e0b; color: #111; font-size: 11px; font-weight: 800;
+    letter-spacing: .06em; padding: 6px 10px; border-radius: 6px;
+    font-family: ui-monospace, monospace;
+  }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;div class=&quot;exp-tag&quot;&gt;BEFORE · DESIGN.md なし&lt;/div&gt;
+  &lt;div class=&quot;container&quot;&gt;
+    &lt;nav&gt;
+      &lt;div class=&quot;logo&quot;&gt;Northstar&lt;/div&gt;
+      &lt;div class=&quot;nav-links&quot;&gt;
+        &lt;a href=&quot;#features&quot;&gt;Features&lt;/a&gt;
+        &lt;a href=&quot;#pricing&quot;&gt;Pricing&lt;/a&gt;
+        &lt;a href=&quot;#customers&quot;&gt;Customers&lt;/a&gt;
+        &lt;a href=&quot;#docs&quot;&gt;Docs&lt;/a&gt;
+      &lt;/div&gt;
+      &lt;a class=&quot;nav-cta&quot; href=&quot;#&quot;&gt;Get started free&lt;/a&gt;
+    &lt;/nav&gt;
+
+    &lt;section class=&quot;hero&quot;&gt;
+      &lt;div class=&quot;badge&quot;&gt;&lt;span&gt;● Live&lt;/span&gt; Now with AI-powered triage&lt;/div&gt;
+      &lt;h1&gt;Ship product, not&lt;br /&gt;&lt;span class=&quot;grad&quot;&gt;status meetings&lt;/span&gt;&lt;/h1&gt;
+      &lt;p&gt;Northstar is the issue tracker for teams who want clarity without the noise. Plan, assign, and ship — in one focused workspace.&lt;/p&gt;
+      &lt;div class=&quot;hero-actions&quot;&gt;
+        &lt;a class=&quot;btn-primary&quot; href=&quot;#&quot;&gt;Start free trial →&lt;/a&gt;
+        &lt;a class=&quot;btn-ghost&quot; href=&quot;#&quot;&gt;Watch demo&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/section&gt;
+
+    &lt;div class=&quot;logos&quot;&gt;
+      &lt;span&gt;Acme Corp&lt;/span&gt;&lt;span&gt;Globex&lt;/span&gt;&lt;span&gt;Initech&lt;/span&gt;
+      &lt;span&gt;Umbrella&lt;/span&gt;&lt;span&gt;Hooli&lt;/span&gt;&lt;span&gt;Stark Ind&lt;/span&gt;
+    &lt;/div&gt;
+
+    &lt;div class=&quot;stats&quot;&gt;
+      &lt;div class=&quot;stat&quot;&gt;&lt;strong&gt;3.2×&lt;/strong&gt;&lt;span&gt;faster cycle time&lt;/span&gt;&lt;/div&gt;
+      &lt;div class=&quot;stat&quot;&gt;&lt;strong&gt;48%&lt;/strong&gt;&lt;span&gt;fewer status pings&lt;/span&gt;&lt;/div&gt;
+      &lt;div class=&quot;stat&quot;&gt;&lt;strong&gt;12k+&lt;/strong&gt;&lt;span&gt;teams shipping daily&lt;/span&gt;&lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;section class=&quot;section&quot; id=&quot;features&quot;&gt;
+      &lt;div class=&quot;section-title&quot;&gt;
+        &lt;h2&gt;Everything you need to ship&lt;/h2&gt;
+        &lt;p&gt;Powerful features designed for modern product teams.&lt;/p&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;grid&quot;&gt;
+        &lt;div class=&quot;card&quot;&gt;
+          &lt;div class=&quot;icon p&quot;&gt;⚡&lt;/div&gt;
+          &lt;h3&gt;Lightning triage&lt;/h3&gt;
+          &lt;p&gt;Auto-route issues by severity, owner, and sprint. Cut triage time from hours to minutes.&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;card&quot;&gt;
+          &lt;div class=&quot;icon c&quot;&gt;🎯&lt;/div&gt;
+          &lt;h3&gt;Roadmap clarity&lt;/h3&gt;
+          &lt;p&gt;See the whole quarter on one board. Drag, prioritize, and align stakeholders without meetings.&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;card&quot;&gt;
+          &lt;div class=&quot;icon g&quot;&gt;🔗&lt;/div&gt;
+          &lt;h3&gt;Deep integrations&lt;/h3&gt;
+          &lt;p&gt;GitHub, Slack, Figma, and CI — wired in by default so context never leaves the issue.&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;card&quot;&gt;
+          &lt;div class=&quot;icon p&quot;&gt;🤖&lt;/div&gt;
+          &lt;h3&gt;AI summaries&lt;/h3&gt;
+          &lt;p&gt;Thread noise becomes a one-line update. Keep PMs informed without writing recaps.&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;card&quot;&gt;
+          &lt;div class=&quot;icon c&quot;&gt;📊&lt;/div&gt;
+          &lt;h3&gt;Cycle analytics&lt;/h3&gt;
+          &lt;p&gt;Throughput, WIP, and aging issues — visible before the retro, not after.&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;card&quot;&gt;
+          &lt;div class=&quot;icon g&quot;&gt;🔒&lt;/div&gt;
+          &lt;h3&gt;Enterprise ready&lt;/h3&gt;
+          &lt;p&gt;SSO, SCIM, audit logs, and region residency. Security that passes the questionnaire.&lt;/p&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/section&gt;
+
+    &lt;section class=&quot;cta&quot;&gt;
+      &lt;h2&gt;Ready to ship with Northstar?&lt;/h2&gt;
+      &lt;p&gt;Free for up to 10 seats. No credit card required.&lt;/p&gt;
+      &lt;a class=&quot;btn-primary&quot; href=&quot;#&quot;&gt;Create your workspace&lt;/a&gt;
+    &lt;/section&gt;
+
+    &lt;footer&gt;
+      &lt;div&gt;© 2026 Northstar Labs · Experiment demo (fictional product)&lt;/div&gt;
+      &lt;div&gt;Privacy · Terms · Status&lt;/div&gt;
+    &lt;/footer&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe>
+      </div>
+      <div class="frame-wrap" id="wrap-after">
+        <div class="frame-bar">
+          <span class="tag-after">AFTER · Linear DESIGN.md</span>
+          <span class="muted">surface ladder / accent scarcity</span>
+        </div>
+        <iframe title="After" srcdoc="&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;ja&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;UTF-8&quot; /&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot; /&gt;
+&lt;title&gt;Northstar — Ship faster (After: Linear DESIGN.md)&lt;/title&gt;
+&lt;style&gt;
+  /*
+   * Strict application of VoltAgent awesome-design-md: design-md/linear.app/DESIGN.md
+   * Tokens from front matter + Do&#x27;s/Don&#x27;ts (no multi-accent, no atmospheric gradients,
+   * no pill CTAs, surface ladder + hairline depth, lavender only for mark/CTA/focus/links)
+   */
+  :root {
+    --primary: #5e6ad2;
+    --on-primary: #ffffff;
+    --primary-hover: #828fff;
+    --primary-focus: #5e69d1;
+    --ink: #f7f8f8;
+    --ink-muted: #d0d6e0;
+    --ink-subtle: #8a8f98;
+    --ink-tertiary: #62666d;
+    --canvas: #010102;
+    --surface-1: #0f1011;
+    --surface-2: #141516;
+    --surface-3: #18191a;
+    --hairline: #23252a;
+    --hairline-strong: #34343a;
+    --r-md: 8px;
+    --r-lg: 12px;
+    --r-xl: 16px;
+    --r-pill: 9999px;
+    --section: 96px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: &quot;SF Pro Text&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;
+    background: var(--canvas);
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  .container { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
+
+  /* top-nav: 56px, canvas bg */
+  nav {
+    height: 56px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(1,1,2,.85); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .logo {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 500; color: var(--ink);
+  }
+  .logo-mark {
+    width: 18px; height: 18px; border-radius: 4px;
+    background: var(--primary);
+  }
+  .nav-links {
+    display: flex; gap: 24px;
+    font-size: 14px; font-weight: 400; color: var(--ink-subtle);
+  }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* Buttons: rounded.md 8px, padding 8×14 — NEVER pill */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 500; line-height: 1.2;
+    padding: 8px 14px; border-radius: var(--r-md);
+    border: 1px solid transparent; cursor: pointer;
+    min-height: 36px;
+  }
+  .btn-primary {
+    background: var(--primary); color: var(--on-primary);
+  }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-secondary {
+    background: var(--surface-1); color: var(--ink);
+    border-color: var(--hairline);
+  }
+  .btn-secondary:hover { background: var(--surface-2); border-color: var(--hairline-strong); }
+  .btn-tertiary {
+    background: transparent; color: var(--ink);
+  }
+
+  /* Hero */
+  .hero {
+    padding: 96px 0 48px;
+    max-width: 720px;
+  }
+  .eyebrow {
+    font-size: 13px; font-weight: 500; letter-spacing: 0.4px;
+    color: var(--ink-subtle); margin-bottom: 20px;
+  }
+  .eyebrow a { color: var(--primary); }
+  h1 {
+    font-family: &quot;SF Pro Display&quot;, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-size: clamp(40px, 6vw, 56px);
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -1.8px;
+    color: var(--ink);
+    margin-bottom: 20px;
+  }
+  .hero-sub {
+    font-size: 18px; font-weight: 400; line-height: 1.5; letter-spacing: -0.1px;
+    color: var(--ink-subtle); max-width: 520px; margin-bottom: 28px;
+  }
+  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  /* Product screenshot card — protagonist */
+  .product-frame {
+    margin: 48px 0 var(--section);
+    background: var(--surface-1);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-xl);
+    padding: 24px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .product-chrome {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--hairline-strong); }
+  .product-ui {
+    background: var(--canvas);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    min-height: 280px;
+  }
+  .ui-bar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; border-bottom: 1px solid var(--hairline);
+    color: var(--ink-tertiary); font-size: 12px;
+  }
+  .ui-search {
+    flex: 1; background: var(--surface-1); border: 1px solid var(--hairline);
+    border-radius: 6px; padding: 6px 10px; color: var(--ink-subtle); font-size: 12px;
+  }
+  .ui-rows { padding: 8px 0; }
+  .ui-row {
+    display: grid; grid-template-columns: 20px 1fr auto auto;
+    gap: 12px; align-items: center;
+    padding: 10px 14px; font-size: 13px; color: var(--ink-muted);
+    border-bottom: 1px solid transparent;
+  }
+  .ui-row:hover { background: var(--surface-1); }
+  .ui-id { color: var(--ink-tertiary); font-variant-numeric: tabular-nums; }
+  .ui-title { color: var(--ink); }
+  .badge {
+    font-size: 12px; font-weight: 400; color: var(--ink-muted);
+    background: var(--surface-2); border-radius: var(--r-pill);
+    padding: 2px 8px;
+  }
+  .prio {
+    width: 8px; height: 8px; border-radius: 2px;
+    background: var(--primary); opacity: .7;
+  }
+
+  /* Logos */
+  .logos {
+    display: flex; flex-wrap: wrap; gap: 16px 32px;
+    padding-bottom: var(--section);
+    color: var(--ink-tertiary); font-size: 12px; font-weight: 400;
+  }
+  .logos span { padding: 16px 0; opacity: .85; }
+
+  /* Features */
+  .section-head { margin-bottom: 32px; max-width: 520px; }
+  .section-head h2 {
+    font-family: &quot;SF Pro Display&quot;, -apple-system, system-ui, sans-serif;
+    font-size: 28px; font-weight: 600; line-height: 1.2; letter-spacing: -0.6px;
+    margin-bottom: 12px;
+  }
+  .section-head p { color: var(--ink-subtle); font-size: 16px; }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    margin-bottom: var(--section);
+  }
+  @media (max-width: 1024px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    h1 { letter-spacing: -1px; }
+  }
+
+  /* feature-card: surface-1, hairline, r-lg, pad 24 */
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    padding: 24px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+  }
+  .card:hover {
+    background: var(--surface-2);
+    border-color: var(--hairline-strong);
+  }
+  .card-label {
+    font-size: 12px; color: var(--ink-tertiary); margin-bottom: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .card h3 {
+    font-family: &quot;SF Pro Display&quot;, -apple-system, system-ui, sans-serif;
+    font-size: 22px; font-weight: 500; line-height: 1.25; letter-spacing: -0.4px;
+    margin-bottom: 8px;
+  }
+  .card p { font-size: 14px; color: var(--ink-subtle); line-height: 1.5; }
+
+  /* Metrics strip — surface ladder, not gradient stats */
+  .metrics {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    margin-bottom: var(--section);
+    background: var(--surface-1);
+  }
+  @media (max-width: 700px) { .metrics { grid-template-columns: 1fr; } }
+  .metric {
+    padding: 32px 24px;
+    border-right: 1px solid var(--hairline);
+  }
+  .metric:last-child { border-right: none; }
+  .metric strong {
+    display: block;
+    font-family: &quot;SF Pro Display&quot;, -apple-system, system-ui, sans-serif;
+    font-size: 40px; font-weight: 600; letter-spacing: -1px;
+    color: var(--ink); margin-bottom: 6px;
+  }
+  .metric span { font-size: 14px; color: var(--ink-subtle); }
+
+  /* Testimonial */
+  .testimonial {
+    background: var(--surface-1);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    padding: 32px;
+    margin-bottom: var(--section);
+  }
+  .testimonial blockquote {
+    font-size: 18px; line-height: 1.5; color: var(--ink-muted);
+    margin-bottom: 20px; font-weight: 400;
+  }
+  .who { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 9999px;
+    background: var(--surface-3); border: 1px solid var(--hairline);
+    display: grid; place-items: center; font-size: 12px; color: var(--ink-subtle);
+  }
+  .who strong { display: block; font-size: 14px; font-weight: 500; color: var(--ink); }
+  .who span { font-size: 13px; color: var(--ink-tertiary); }
+
+  /* CTA banner */
+  .cta-banner {
+    background: var(--surface-1);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    padding: 48px;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 64px;
+  }
+  .cta-banner h2 {
+    font-family: &quot;SF Pro Display&quot;, -apple-system, system-ui, sans-serif;
+    font-size: 28px; font-weight: 600; letter-spacing: -0.6px; margin-bottom: 8px;
+  }
+  .cta-banner p { color: var(--ink-subtle); font-size: 16px; }
+
+  footer {
+    border-top: 1px solid var(--hairline);
+    padding: 64px 0 48px;
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 24px;
+    color: var(--ink-tertiary); font-size: 12px;
+  }
+  footer a:hover { color: var(--ink-subtle); }
+
+  .exp-tag {
+    position: fixed; bottom: 16px; left: 16px; z-index: 100;
+    background: var(--primary); color: white; font-size: 11px; font-weight: 600;
+    letter-spacing: .04em; padding: 6px 10px; border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;div class=&quot;exp-tag&quot;&gt;AFTER · Linear DESIGN.md&lt;/div&gt;
+  &lt;div class=&quot;container&quot;&gt;
+    &lt;nav&gt;
+      &lt;div class=&quot;logo&quot;&gt;&lt;span class=&quot;logo-mark&quot; aria-hidden=&quot;true&quot;&gt;&lt;/span&gt; Northstar&lt;/div&gt;
+      &lt;div class=&quot;nav-links&quot;&gt;
+        &lt;a href=&quot;#features&quot;&gt;Features&lt;/a&gt;
+        &lt;a href=&quot;#method&quot;&gt;Method&lt;/a&gt;
+        &lt;a href=&quot;#customers&quot;&gt;Customers&lt;/a&gt;
+        &lt;a href=&quot;#changelog&quot;&gt;Changelog&lt;/a&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;nav-actions&quot;&gt;
+        &lt;a class=&quot;btn btn-secondary&quot; href=&quot;#&quot;&gt;Log in&lt;/a&gt;
+        &lt;a class=&quot;btn btn-primary&quot; href=&quot;#&quot;&gt;Sign up&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/nav&gt;
+
+    &lt;section class=&quot;hero&quot;&gt;
+      &lt;p class=&quot;eyebrow&quot;&gt;New · &lt;a href=&quot;#&quot;&gt;Cycle analytics is generally available →&lt;/a&gt;&lt;/p&gt;
+      &lt;h1&gt;Ship product, not status meetings&lt;/h1&gt;
+      &lt;p class=&quot;hero-sub&quot;&gt;Northstar is the issue tracker for teams who want clarity without the noise. Plan, assign, and ship — in one focused workspace.&lt;/p&gt;
+      &lt;div class=&quot;hero-actions&quot;&gt;
+        &lt;a class=&quot;btn btn-primary&quot; href=&quot;#&quot;&gt;Get started&lt;/a&gt;
+        &lt;a class=&quot;btn btn-secondary&quot; href=&quot;#&quot;&gt;Contact sales&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/section&gt;
+
+    &lt;div class=&quot;product-frame&quot;&gt;
+      &lt;div class=&quot;product-chrome&quot;&gt;
+        &lt;span class=&quot;dot&quot;&gt;&lt;/span&gt;&lt;span class=&quot;dot&quot;&gt;&lt;/span&gt;&lt;span class=&quot;dot&quot;&gt;&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;product-ui&quot;&gt;
+        &lt;div class=&quot;ui-bar&quot;&gt;
+          &lt;span&gt;Issues&lt;/span&gt;
+          &lt;div class=&quot;ui-search&quot;&gt;Filter by assignee, label, cycle…&lt;/div&gt;
+          &lt;span class=&quot;badge&quot;&gt;Active&lt;/span&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;ui-rows&quot;&gt;
+          &lt;div class=&quot;ui-row&quot;&gt;&lt;span class=&quot;prio&quot;&gt;&lt;/span&gt;&lt;span class=&quot;ui-title&quot;&gt;Triage inbound API errors for billing&lt;/span&gt;&lt;span class=&quot;ui-id&quot;&gt;NOR-214&lt;/span&gt;&lt;span class=&quot;badge&quot;&gt;In Progress&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;ui-row&quot;&gt;&lt;span class=&quot;prio&quot; style=&quot;opacity:.4&quot;&gt;&lt;/span&gt;&lt;span class=&quot;ui-title&quot;&gt;Add SSO SCIM group mapping&lt;/span&gt;&lt;span class=&quot;ui-id&quot;&gt;NOR-198&lt;/span&gt;&lt;span class=&quot;badge&quot;&gt;Todo&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;ui-row&quot;&gt;&lt;span class=&quot;prio&quot;&gt;&lt;/span&gt;&lt;span class=&quot;ui-title&quot;&gt;Cycle 42 retro notes → action items&lt;/span&gt;&lt;span class=&quot;ui-id&quot;&gt;NOR-187&lt;/span&gt;&lt;span class=&quot;badge&quot;&gt;Review&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;ui-row&quot;&gt;&lt;span class=&quot;prio&quot; style=&quot;opacity:.25&quot;&gt;&lt;/span&gt;&lt;span class=&quot;ui-title&quot;&gt;Docs: webhook retry semantics&lt;/span&gt;&lt;span class=&quot;ui-id&quot;&gt;NOR-176&lt;/span&gt;&lt;span class=&quot;badge&quot;&gt;Backlog&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;ui-row&quot;&gt;&lt;span class=&quot;prio&quot;&gt;&lt;/span&gt;&lt;span class=&quot;ui-title&quot;&gt;Ship mobile push for mentions&lt;/span&gt;&lt;span class=&quot;ui-id&quot;&gt;NOR-165&lt;/span&gt;&lt;span class=&quot;badge&quot;&gt;In Progress&lt;/span&gt;&lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div class=&quot;logos&quot;&gt;
+      &lt;span&gt;Acme Corp&lt;/span&gt;&lt;span&gt;Globex&lt;/span&gt;&lt;span&gt;Initech&lt;/span&gt;
+      &lt;span&gt;Umbrella&lt;/span&gt;&lt;span&gt;Hooli&lt;/span&gt;&lt;span&gt;Stark Industries&lt;/span&gt;
+    &lt;/div&gt;
+
+    &lt;div class=&quot;metrics&quot;&gt;
+      &lt;div class=&quot;metric&quot;&gt;&lt;strong&gt;3.2×&lt;/strong&gt;&lt;span&gt;faster cycle time&lt;/span&gt;&lt;/div&gt;
+      &lt;div class=&quot;metric&quot;&gt;&lt;strong&gt;48%&lt;/strong&gt;&lt;span&gt;fewer status pings&lt;/span&gt;&lt;/div&gt;
+      &lt;div class=&quot;metric&quot;&gt;&lt;strong&gt;12k+&lt;/strong&gt;&lt;span&gt;teams shipping daily&lt;/span&gt;&lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;section id=&quot;features&quot;&gt;
+      &lt;div class=&quot;section-head&quot;&gt;
+        &lt;h2&gt;Built for how engineering actually works&lt;/h2&gt;
+        &lt;p&gt;Same product story as the control page — tokens, surface ladder, and accent scarcity from Linear’s DESIGN.md only.&lt;/p&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;grid&quot;&gt;
+        &lt;div class=&quot;card&quot;&gt;
+          &lt;div class=&quot;card-label&quot;&gt;01 · Workflow&lt;/div&gt;
+          &lt;h3&gt;Lightning triage&lt;/h3&gt;
+          &lt;p&gt;Auto-route issues by severity, owner, and sprint. Cut triage time from hours to minutes.&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;card&quot;&gt;
+          &lt;div class=&quot;card-label&quot;&gt;02 · Planning&lt;/div&gt;
+          &lt;h3&gt;Roadmap clarity&lt;/h3&gt;
+          &lt;p&gt;See the whole quarter on one board. Drag, prioritize, and align stakeholders without meetings.&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;card&quot;&gt;
+          &lt;div class=&quot;card-label&quot;&gt;03 · Context&lt;/div&gt;
+          &lt;h3&gt;Deep integrations&lt;/h3&gt;
+          &lt;p&gt;GitHub, Slack, Figma, and CI — wired in by default so context never leaves the issue.&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;card&quot;&gt;
+          &lt;div class=&quot;card-label&quot;&gt;04 · AI&lt;/div&gt;
+          &lt;h3&gt;Thread summaries&lt;/h3&gt;
+          &lt;p&gt;Thread noise becomes a one-line update. Keep PMs informed without writing recaps.&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;card&quot;&gt;
+          &lt;div class=&quot;card-label&quot;&gt;05 · Insight&lt;/div&gt;
+          &lt;h3&gt;Cycle analytics&lt;/h3&gt;
+          &lt;p&gt;Throughput, WIP, and aging issues — visible before the retro, not after.&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;card&quot;&gt;
+          &lt;div class=&quot;card-label&quot;&gt;06 · Trust&lt;/div&gt;
+          &lt;h3&gt;Enterprise ready&lt;/h3&gt;
+          &lt;p&gt;SSO, SCIM, audit logs, and region residency. Security that passes the questionnaire.&lt;/p&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/section&gt;
+
+    &lt;div class=&quot;testimonial&quot;&gt;
+      &lt;blockquote&gt;“We stopped rewriting the same status in three tools. Northstar made the board the source of truth.”&lt;/blockquote&gt;
+      &lt;div class=&quot;who&quot;&gt;
+        &lt;div class=&quot;avatar&quot;&gt;MK&lt;/div&gt;
+        &lt;div&gt;
+          &lt;strong&gt;Maya K.&lt;/strong&gt;
+          &lt;span&gt;Eng Manager · fictional quote for experiment&lt;/span&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div class=&quot;cta-banner&quot;&gt;
+      &lt;div&gt;
+        &lt;h2&gt;Start shipping with Northstar&lt;/h2&gt;
+        &lt;p&gt;Free for up to 10 seats. No credit card required.&lt;/p&gt;
+      &lt;/div&gt;
+      &lt;div style=&quot;display:flex;gap:8px;flex-wrap:wrap&quot;&gt;
+        &lt;a class=&quot;btn btn-primary&quot; href=&quot;#&quot;&gt;Get started&lt;/a&gt;
+        &lt;a class=&quot;btn btn-secondary&quot; href=&quot;#&quot;&gt;Read the docs&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;footer&gt;
+      &lt;div&gt;© 2026 Northstar Labs · Experiment demo (fictional product)&lt;/div&gt;
+      &lt;div style=&quot;display:flex;gap:16px&quot;&gt;
+        &lt;a href=&quot;#&quot;&gt;Privacy&lt;/a&gt;
+        &lt;a href=&quot;#&quot;&gt;Terms&lt;/a&gt;
+        &lt;a href=&quot;#&quot;&gt;Status&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/footer&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <section class="findings">
+    <div class="card">
+      <h2>観察結果</h2>
+      <ul>
+        <li><strong>色の統制</strong>: Before は紫・ピンク・シアン・緑が同時に出る。After はラベンダー1色＋ニュートラルのみ。</li>
+        <li><strong>形状</strong>: Before の CTA は pill。After は DESIGN.md 通り 8px（pill CTA 禁止）。</li>
+        <li><strong>奥行き</strong>: Before は blur + 強い shadow + 放射グラデ。After は surface ladder + hairline。</li>
+        <li><strong>タイポ</strong>: Before は Inter 800 + グラデ文字。After は 600 display / 400 body・強い negative tracking。</li>
+        <li><strong>製品感</strong>: After は product UI を主人公に。Before は絵文字カード中心でテンプレ感が強い。</li>
+        <li><strong>再現コスト</strong>: DESIGN.md があればトークン指定が機械的。なしだと毎回「いい感じの SaaS」に収束。</li>
+      </ul>
+      <div class="verdict">
+        <strong>結論:</strong> 効果は「ゼロ→天才デザイン」ではなく
+        <strong>「AI スロップをブランド言語に固定する」</strong>方向で明確。
+        色・角丸・余白・アクセント希少性のガードレールが効く。
+        Linear そのものにはならず inspired-by 近似。独自ブランドには自前 DESIGN.md が必要。
+      </div>
+    </div>
+    <div class="card">
+      <h2>差分チェックリスト</h2>
+      <table>
+        <thead><tr><th>項目</th><th>Before</th><th>After</th></tr></thead>
+        <tbody>
+          <tr><td>Canvas</td><td class="muted">#0b1020 + glow</td><td>#010102</td></tr>
+          <tr><td>Primary CTA</td><td class="muted">gradient pill</td><td>#5e6ad2 · 8px</td></tr>
+          <tr><td>Chromatic accents</td><td class="muted">4+ colors</td><td>lavender only</td></tr>
+          <tr><td>Card depth</td><td class="muted">glass + shadow</td><td>surface-1 + hairline</td></tr>
+          <tr><td>Display weight</td><td class="muted">800</td><td>600</td></tr>
+          <tr><td>Hero media</td><td class="muted">なし / 数字帯</td><td>product UI frame</td></tr>
+          <tr><td>Do's/Don'ts</td><td class="muted">なし</td><td>遵守</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:14px;font-size:13px;color:var(--muted)">
+        採用判断: 社内プロダクトの AI 生成 UI の見た目ブレ対策として条件付きで有用。
+        スター数は無視してよい。価値は markdown 設計仕様そのもの。
+      </p>
+    </div>
+  </section>
+  <footer>Fictional product Northstar. Not affiliated with Linear. Tokens from public awesome-design-md (MIT).</footer>
+  <script>
+    const frames = document.getElementById('frames');
+    const wrapBefore = document.getElementById('wrap-before');
+    const wrapAfter = document.getElementById('wrap-after');
+    document.querySelectorAll('.seg button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.seg button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const v = btn.dataset.view;
+        frames.classList.toggle('single', v !== 'split');
+        wrapBefore.style.display = v === 'after' ? 'none' : 'flex';
+        wrapAfter.style.display = v === 'before' ? 'none' : 'flex';
+      });
+    });
+  </script>
+
+<!-- web-publish-badge -->
+<div id="wp-badge" style="position:fixed;right:16px;bottom:16px;z-index:2147483000;display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:999px;background:rgba(15,23,42,0.88);color:#f1f5f9;font:600 12.5px/1.4 -apple-system,BlinkMacSystemFont,'Hiragino Sans','Noto Sans JP',sans-serif;box-shadow:0 4px 18px rgba(0,0,0,0.28);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);max-width:min(86vw,560px);">
+  <span style="display:inline-block;width:9px;height:9px;border-radius:999px;background:#fbbf24;flex:none;"></span>
+  <span style="letter-spacing:0.08em;flex:none;">PROTOTYPE</span>
+  <span style="font-weight:400;color:#cbd5e1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">動作確認用プロトタイプ (バックエンド未接続) · 2026-07-09</span>
+  <span onclick="this.parentNode.remove()" title="バッジを閉じる" style="cursor:pointer;color:#94a3b8;font-weight:400;padding-left:2px;flex:none;">&#215;</span>
+</div>
+<!-- /web-publish-badge -->
+</body>
+</html>
