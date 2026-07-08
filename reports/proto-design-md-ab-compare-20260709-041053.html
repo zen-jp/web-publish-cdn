@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="web-publish">
+  <meta property="og:title" content="awesome-design-md 検証 · Before / After">
+  <meta property="og:url" content="https://zen-jp.github.io/web-publish-cdn/reports/proto-design-md-ab-compare-20260709-041053.html">
+  <meta property="og:image" content="https://raw.githubusercontent.com/zen-jp/web-publish-cdn/master/og/proto-design-md-ab-compare-20260709-041034.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="awesome-design-md 検証 · Before / After">
+  <meta name="twitter:image" content="https://raw.githubusercontent.com/zen-jp/web-publish-cdn/master/og/proto-design-md-ab-compare-20260709-041034.png">
+
+  <meta name="robots" content="noindex, nofollow">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>awesome-design-md 検証 · Before / After</title>
+<style>
+  :root {
+    --bg: #0c0d10;
+    --panel: #14151a;
+    --line: #2a2d36;
+    --text: #eef0f4;
+    --muted: #9aa0ad;
+    --before: #f59e0b;
+    --after: #5e6ad2;
+    --ok: #27a644;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    border-bottom: 1px solid var(--line);
+    padding: 28px 24px 22px;
+    max-width: 1440px; margin: 0 auto;
+  }
+  header .kicker {
+    font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 8px;
+  }
+  h1 { font-size: clamp(22px, 3vw, 30px); font-weight: 600; letter-spacing: -0.03em; margin-bottom: 10px; }
+  .lead { color: var(--muted); max-width: 820px; font-size: 15px; }
+  .lead a { color: #a5b0ff; }
+
+  .meta {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px;
+  }
+  .chip {
+    font-size: 12px; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--muted); background: var(--panel);
+  }
+  .chip strong { color: var(--text); font-weight: 600; }
+
+  .toolbar {
+    max-width: 1440px; margin: 0 auto;
+    padding: 16px 24px;
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 30;
+    background: rgba(12,13,16,.92); backdrop-filter: blur(10px);
+  }
+  .seg {
+    display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+  }
+  .seg button {
+    appearance: none; border: 0; background: transparent; color: var(--muted);
+    padding: 8px 14px; font-size: 13px; font-weight: 500; cursor: pointer;
+  }
+  .seg button.active { background: var(--panel); color: var(--text); }
+  .links { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+  .links a {
+    font-size: 13px; color: var(--muted); border: 1px solid var(--line);
+    padding: 8px 12px; border-radius: 8px; text-decoration: none; background: var(--panel);
+  }
+  .links a:hover { color: var(--text); }
+
+  .stage {
+    max-width: 1440px; margin: 0 auto; padding: 16px 16px 32px;
+  }
+  .frames {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-height: 72vh;
+  }
+  .frames.single { grid-template-columns: 1fr; }
+  @media (max-width: 900px) { .frames { grid-template-columns: 1fr; } }
+
+  .frame-wrap {
+    display: flex; flex-direction: column; min-height: 70vh;
+    border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #000;
+  }
+  .frame-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px; background: var(--panel); border-bottom: 1px solid var(--line);
+    font-size: 12px; font-weight: 600;
+  }
+  .tag-before { color: var(--before); }
+  .tag-after { color: #a5b0ff; }
+  iframe { flex: 1; width: 100%; border: 0; background: #000; min-height: 68vh; }
+
+  .findings {
+    max-width: 1440px; margin: 0 auto 48px; padding: 0 24px;
+    display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px;
+  }
+  @media (max-width: 900px) { .findings { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px;
+  }
+  .card h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; letter-spacing: -0.02em; }
+  .card ul { padding-left: 18px; color: var(--muted); font-size: 14px; }
+  .card li { margin: 6px 0; }
+  .card li strong { color: var(--text); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  td { color: var(--text); }
+  .muted { color: var(--muted); }
+  .verdict {
+    margin-top: 14px; padding: 12px 14px; border-radius: 8px;
+    background: rgba(94,106,210,.12); border: 1px solid rgba(94,106,210,.35);
+    font-size: 14px; color: var(--text);
+  }
+  .verdict strong { color: #c4caff; }
+  footer {
+    max-width: 1440px; margin: 0 auto 40px; padding: 0 24px;
+    color: var(--muted); font-size: 12px;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="kicker">Experiment · VoltAgent/awesome-design-md</div>
+    <h1>DESIGN.md あり / なし — 同一プロンプトの Before / After</h1>
+    <p class="lead">
+      架空プロダクト <strong>Northstar</strong>（issue tracker LP）を、同じコピー・同じ機能説明で 2 通り生成した。
+      Control は DESIGN.md なし（よくある AI デフォルト SaaS 見た目）、Treatment は
+      <a href="https://github.com/VoltAgent/awesome-design-md/blob/main/design-md/linear.app/DESIGN.md" target="_blank" rel="noopener">linear.app/DESIGN.md</a>
+      のトークンと Do's/Don'ts を厳守。
+      元リポジトリ: <a href="https://github.com/VoltAgent/awesome-design-md" target="_blank" rel="noopener">VoltAgent/awesome-design-md</a>
+    </p>
+    <div class="meta">
+      <span class="chip"><strong>対象</strong> Linear-inspired DESIGN.md</span>
+      <span class="chip"><strong>変数</strong> DESIGN.md の有無のみ</span>
+      <span class="chip"><strong>固定</strong> 見出し / 本文 / 機能 6 点 / 数値 3 点</span>
+      <span class="chip"><strong>目的</strong> 見た目の一貫性・「らしさ」の差を体感</span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="seg" role="tablist">
+      <button type="button" class="active" data-view="split">Split</button>
+      <button type="button" data-view="before">Before only</button>
+      <button type="button" data-view="after">After only</button>
+    </div>
+    <div class="links">
+      <a href="before.html" target="_blank">Open Before ↗</a>
+      <a href="after-linear.html" target="_blank">Open After ↗</a>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="frames" id="frames">
+      <div class="frame-wrap" id="wrap-before">
+        <div class="frame-bar">
+          <span class="tag-before">BEFORE · DESIGN.md なし</span>
+          <span class="muted">gradient / pill / multi-accent</span>
+        </div>
+        <iframe src="before.html" title="Before without DESIGN.md"></iframe>
+      </div>
+      <div class="frame-wrap" id="wrap-after">
+        <div class="frame-bar">
+          <span class="tag-after">AFTER · Linear DESIGN.md</span>
+          <span class="muted">surface ladder / accent scarcity</span>
+        </div>
+        <iframe src="after-linear.html" title="After with Linear DESIGN.md"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <section class="findings">
+    <div class="card">
+      <h2>観察結果（実測・主観評価）</h2>
+      <ul>
+        <li><strong>色の統制</strong>: Before は紫・ピンク・シアン・緑が同時に出る。After はラベンダー1色＋ニュートラルのみ。</li>
+        <li><strong>形状</strong>: Before の CTA は pill (9999px)。After は DESIGN.md 通り 8px（pill CTA 禁止）。</li>
+        <li><strong>奥行き</strong>: Before は blur + 強い drop shadow + 放射グラデ。After は surface ladder + hairline（影ほぼなし）。</li>
+        <li><strong>タイポ</strong>: Before は Inter 800 級・グラデ文字。After は 600 display / 400 body・強い negative tracking。</li>
+        <li><strong>製品感</strong>: After は product screenshot を主人公に置ける構造。Before はアイコンカード中心で「テンプレ感」が強い。</li>
+        <li><strong>再現コスト</strong>: DESIGN.md を読めばトークン指定が機械的。なしだと毎回「いい感じの SaaS」に収束しやすい。</li>
+      </ul>
+      <div class="verdict">
+        <strong>結論:</strong> 効果は「ゼロ→プロダクトらしさ」より
+        <strong>「AI スロップをブランド言語に固定する」</strong>方向で明確。
+        特に色・角丸・余白・アクセント希少性のガードレールが効く。
+        ただし「Linear そのもの」になるわけではなく、<em>inspired-by</em> の近似。独自ブランドには自前 DESIGN.md が必要。
+      </div>
+    </div>
+    <div class="card">
+      <h2>差分チェックリスト</h2>
+      <table>
+        <thead>
+          <tr><th>項目</th><th>Before</th><th>After</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Canvas</td><td class="muted">#0b1020 + glow</td><td>#010102</td></tr>
+          <tr><td>Primary CTA</td><td class="muted">gradient pill</td><td>#5e6ad2 · 8px</td></tr>
+          <tr><td>Chromatic accents</td><td class="muted">4+ colors</td><td>lavender only</td></tr>
+          <tr><td>Card depth</td><td class="muted">glass + shadow</td><td>surface-1 + hairline</td></tr>
+          <tr><td>Display weight</td><td class="muted">800</td><td>600</td></tr>
+          <tr><td>Hero media</td><td class="muted">なし / 数字帯</td><td>product UI frame</td></tr>
+          <tr><td>Do's/Don'ts</td><td class="muted">なし</td><td>遵守</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:14px;font-size:13px;color:var(--muted)">
+        採用判断メモ: 社内プロダクトの「AI 生成 UI の見た目ブレ」対策として
+        条件付きで有用。スター数 (98k) は無視してよく、価値は markdown 設計仕様そのものにある。
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    Fictional product “Northstar”. Not affiliated with Linear. DESIGN tokens sourced from public awesome-design-md (MIT). Experiment for evaluation only.
+  </footer>
+
+  <script>
+    const frames = document.getElementById('frames');
+    const wrapBefore = document.getElementById('wrap-before');
+    const wrapAfter = document.getElementById('wrap-after');
+    document.querySelectorAll('.seg button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.seg button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const v = btn.dataset.view;
+        frames.classList.toggle('single', v !== 'split');
+        wrapBefore.style.display = v === 'after' ? 'none' : 'flex';
+        wrapAfter.style.display = v === 'before' ? 'none' : 'flex';
+      });
+    });
+  </script>
+
+<!-- web-publish-badge -->
+<div id="wp-badge" style="position:fixed;right:16px;bottom:16px;z-index:2147483000;display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:999px;background:rgba(15,23,42,0.88);color:#f1f5f9;font:600 12.5px/1.4 -apple-system,BlinkMacSystemFont,'Hiragino Sans','Noto Sans JP',sans-serif;box-shadow:0 4px 18px rgba(0,0,0,0.28);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);max-width:min(86vw,560px);">
+  <span style="display:inline-block;width:9px;height:9px;border-radius:999px;background:#fbbf24;flex:none;"></span>
+  <span style="letter-spacing:0.08em;flex:none;">PROTOTYPE</span>
+  <span style="font-weight:400;color:#cbd5e1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">動作確認用プロトタイプ (バックエンド未接続) · 2026-07-09</span>
+  <span onclick="this.parentNode.remove()" title="バッジを閉じる" style="cursor:pointer;color:#94a3b8;font-weight:400;padding-left:2px;flex:none;">&#215;</span>
+</div>
+<!-- /web-publish-badge -->
+</body>
+</html>
